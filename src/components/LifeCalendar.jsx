@@ -46,18 +46,23 @@ const LifeCalendar = ({ birthdate, setBirthdate }) => {
                 maxWidth: '100%',
                 overflowX: 'auto'
             }}>
-                {Array.from({ length: TOTAL_WEEKS }).map((_, index) => (
-                    <div
-                        key={index}
-                        style={{
-                            width: '6px',
-                            height: '6px',
-                            backgroundColor: index < weeksLived.weeks ? 'var(--filled-color, #fff)' : 'var(--empty-color, #333)',
-                            borderRadius: '1px' // rounding slightly specifically for screen rendering, might remove for 'print' feel
-                        }}
-                        title={`Week ${index + 1}`}
-                    />
-                ))}
+                {Array.from({ length: TOTAL_WEEKS }).map((_, index) => {
+                    const isPast = index < weeksLived.weeks
+                    const isCurrent = index === weeksLived.weeks
+                    return (
+                        <div
+                            key={index}
+                            style={{
+                                width: '6px',
+                                height: '6px',
+                                backgroundColor: isCurrent ? '#E69138' : (isPast ? '#fff' : '#333'),
+                                opacity: isCurrent ? 1 : (isPast ? 0.8 : 0.3),
+                                borderRadius: '1px'
+                            }}
+                            title={`Week ${index + 1}`}
+                        />
+                    )
+                })}
             </div>
         </div>
     )

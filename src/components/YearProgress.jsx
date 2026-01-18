@@ -47,7 +47,7 @@ const YearProgress = () => {
                         cy={radius}
                     />
                     <circle
-                        stroke="#fff"
+                        stroke="#E69138"
                         strokeDasharray={circumference + ' ' + circumference}
                         style={{ strokeDashoffset, transition: 'stroke-dashoffset 0.5s ease-in-out' }}
                         strokeWidth={stroke}

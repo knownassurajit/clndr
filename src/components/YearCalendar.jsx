@@ -65,7 +65,7 @@ const YearCalendar = () => {
                                     title={day.date.toDateString()}
                                     style={{
                                         aspectRatio: '1',
-                                        backgroundColor: day.isPast || day.isToday ? '#fff' : '#333',
+                                        backgroundColor: day.isToday ? '#E69138' : (day.isPast ? '#fff' : '#333'),
                                         opacity: day.isToday ? 1 : (day.isPast ? 0.8 : 0.3),
                                         borderRadius: '1px'
                                     }}

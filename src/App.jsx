@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import LifeCalendar from './components/LifeCalendar'
 import YearCalendar from './components/YearCalendar'
 import YearProgress from './components/YearProgress'
+import logo from './logo_full.svg'
 import './index.css'
 
 function App() {
@@ -17,7 +18,7 @@ function App() {
   return (
     <div className="layout">
       <header>
-        <h1>THE LIFE CALENDAR</h1>
+        <img src={logo} alt="THE LIFE CALENDAR" style={{ maxHeight: '80px', margin: '0 auto', display: 'block' }} />
       </header>
 
       <nav className="nav-tabs">
@@ -55,7 +56,7 @@ function App() {
 
       <footer>
         <p style={{ opacity: 0.5, fontSize: '0.8rem', marginTop: '3rem' }}>
-          Inspired by <a href="https://www.thelifecalendar.com" style={{ color: 'inherit' }} target="_blank" rel="noreferrer">The Life Calendar</a>
+          Created by Surajit Das
         </p>
       </footer>
     </div>
