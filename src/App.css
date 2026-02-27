@@ -1,42 +1,248 @@
-#root {
-  max-width: 1280px;
+.layout {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  padding: 1.5rem 1rem;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.top-logo {
+  max-height: 64px;
+  margin: 0 auto;
+  display: block;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+/* Material 3 Segmented Button Navigation */
+.nav-tabs {
+  display: inline-flex;
+  margin: 0 auto 2rem auto;
+  background-color: var(--md-sys-color-surface-container);
+  border-radius: var(--md-sys-shape-corner-full);
+  padding: 4px;
+  gap: 4px;
+}
+
+.nav-tabs button {
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-on-surface-variant);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--md-sys-shape-corner-full);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.1px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-tabs button:hover {
+  background-color: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+}
+
+.nav-tabs button.active {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+main {
+  flex: 1;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Material 3 Cards */
+.md-card {
+  background-color: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large);
+  padding: 1.5rem;
+  box-shadow: var(--md-sys-elevation-level1);
+  transition: box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1), transform 0.2s;
+  border: 1px solid var(--md-sys-color-surface-container-highest);
+}
+
+.md-card:hover {
+  box-shadow: var(--md-sys-elevation-level2);
+}
+
+/* Responsive adjustments for cards */
+@media (min-width: 768px) {
+  .md-card {
+    padding: 2.5rem;
   }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-.card {
-  padding: 2em;
+.card-header h2 {
+  margin: 0;
+  font-weight: 400;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  color: var(--md-sys-color-on-surface);
 }
 
-.read-the-docs {
-  color: #888;
+/* Material 3 Text Field (Simplified) */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background-color: var(--md-sys-color-surface-container-highest);
+  border-radius: var(--md-sys-shape-corner-extra-small) var(--md-sys-shape-corner-extra-small) 0 0;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--md-sys-color-on-surface-variant);
+  transition: background-color 0.2s, border-bottom-color 0.2s;
+}
+
+.input-group:focus-within {
+  background-color: var(--md-sys-color-surface-variant);
+  border-bottom: 2px solid var(--md-sys-color-primary);
+  padding-bottom: 7px;
+  /* prevent layout shift on 2px border */
+}
+
+.input-group label {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 16px;
+}
+
+.input-group:focus-within label {
+  color: var(--md-sys-color-primary);
+}
+
+input[type="date"] {
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: 1rem;
+  line-height: 24px;
+  padding: 4px 0 0 0;
+  cursor: pointer;
+}
+
+input[type="date"]:focus {
+  outline: none;
+}
+
+/* Life Calendar Grid & Stats */
+.stats-summary {
+  font-size: 1.125rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.highlight-text {
+  color: var(--md-sys-color-primary);
+  font-weight: 500;
+  font-size: 2.5rem;
+  line-height: 3rem;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.days-grid-container {
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  margin: 0 -0.5rem;
+  padding-left: 0.5rem;
+}
+
+.dynamic-days-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  justify-content: flex-start;
+  align-content: flex-start;
+}
+
+.day-cell {
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  flex-shrink: 0;
+  background-color: var(--md-sys-color-surface-container-highest);
+}
+
+.day-cell.lived {
+  background-color: var(--md-sys-color-tertiary);
+  opacity: 0.85;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s;
+}
+
+.day-cell.lived:hover {
+  opacity: 1;
+  transform: scale(1.6);
+  box-shadow: 0 0 4px var(--md-sys-color-tertiary);
+  z-index: 10;
+  position: relative;
+}
+
+.motivation-text {
+  text-align: center;
+  margin-top: 2.5rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+/* Year Calendar */
+.year-calendar .months-grid {
+  gap: 2.5rem;
+}
+
+.month-block h3 {
+  color: var(--md-sys-color-on-surface);
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0.1px;
+  margin-bottom: 1rem;
+}
+
+/* Year Progress */
+.dashboard svg circle {
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.stat-item {
+  background-color: var(--md-sys-color-surface-container);
+  padding: 1.5rem;
+  border-radius: var(--md-sys-shape-corner-medium);
+  min-width: 120px;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
 }

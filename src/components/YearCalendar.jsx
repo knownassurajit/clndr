@@ -34,15 +34,15 @@ const YearCalendar = () => {
     }, [currentYear])
 
     return (
-        <div className="calendar-container year-calendar">
-            <div className="controls" style={{ marginBottom: '2rem', textAlign: 'center' }}>
+        <div className="calendar-container year-calendar md-card">
+            <div className="card-header" style={{ marginBottom: '2rem', justifyContent: 'center' }}>
                 <h2>{currentYear}</h2>
             </div>
 
             <div className="months-grid" style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '2rem',
+                gap: '2.5rem',
                 maxWidth: '100%'
             }}>
                 {months.map((month) => (
@@ -65,9 +65,9 @@ const YearCalendar = () => {
                                     title={day.date.toDateString()}
                                     style={{
                                         aspectRatio: '1',
-                                        backgroundColor: day.isToday ? '#E69138' : (day.isPast ? '#fff' : '#333'),
+                                        backgroundColor: day.isToday ? 'var(--md-sys-color-tertiary)' : (day.isPast ? 'var(--md-sys-color-outline-variant)' : 'var(--md-sys-color-surface-container)'),
                                         opacity: day.isToday ? 1 : (day.isPast ? 0.8 : 0.3),
-                                        borderRadius: '1px'
+                                        borderRadius: '2px'
                                     }}
                                 />
                             ))}

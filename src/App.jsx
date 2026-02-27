@@ -18,7 +18,7 @@ function App() {
   return (
     <div className="layout">
       <header>
-        <img src={logo} alt="THE LIFE CALENDAR" style={{ maxHeight: '80px', margin: '0 auto', display: 'block' }} />
+        <img src={logo} alt="THE LIFE CALENDAR" className="top-logo" />
       </header>
 
       <nav className="nav-tabs">
@@ -42,7 +42,7 @@ function App() {
         </button>
       </nav>
 
-      <main id="calendar-export-target" style={{ padding: '2rem', background: '#000', minHeight: '600px' }}>
+      <main id="calendar-export-target" style={{ padding: '0', minHeight: 'auto', background: 'transparent' }}>
         {view === 'life' && (
           <LifeCalendar birthdate={birthdate} setBirthdate={setBirthdate} />
         )}
@@ -55,7 +55,7 @@ function App() {
       </main>
 
       <footer>
-        <p style={{ opacity: 0.5, fontSize: '0.8rem', marginTop: '3rem' }}>
+        <p style={{ opacity: 0.5, fontSize: '0.8rem', marginTop: '3rem', textAlign: 'center', marginBottom: '2rem' }}>
           Created by Surajit Das
         </p>
       </footer>
