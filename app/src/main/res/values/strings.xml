@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">clndr</string>
+    <string name="widget_year_progress_label">Year Progress</string>
+    <string name="widget_year_progress_desc">Cycles of now: era, year, month, week, day.</string>
+    <string name="widget_life_matrix_label">Life Matrix</string>
+    <string name="widget_life_matrix_desc">110 years of weeks at a glance.</string>
+</resources>

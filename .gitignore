@@ -1,24 +1,37 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Gradle
+.gradle/
+build/
+local.properties
+gradle/**/build/
 
-node_modules
-dist
-dist-ssr
-*.local
+# IntelliJ / Android Studio
+*.iml
+.idea/
+*.iws
+*.ipr
+out/
+captures/
+.cxx/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# OS
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# Android build outputs
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Signing
+*.keystore
+*.jks
+keystore.properties
+
+# Logs
+*.log
+hs_err_pid*
+
+# KSP / kotlin
+.kotlin/

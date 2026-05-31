@@ -1,0 +1,38 @@
+package com.clndr.feature.lifegrid.state
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.clndr.core.datetime.ProgressBuckets
+import com.clndr.core.domain.usecase.GetYearProgressUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.launchIn
+import java.time.LocalDate
+import javax.inject.Inject
+
+@HiltViewModel
+class YearProgressViewModel @Inject constructor(
+    private val getYearProgress: GetYearProgressUseCase,
+) : ViewModel() {
+
+    private val _birth = MutableStateFlow<LocalDate?>(null)
+    private val _buckets = MutableStateFlow(ProgressBuckets.EMPTY)
+    val buckets: StateFlow<ProgressBuckets> = _buckets.asStateFlow()
+
+    init {
+        @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+        _birth.flatMapLatest { birth ->
+            if (birth != null) getYearProgress(birth) else flowOf(ProgressBuckets.EMPTY)
+        }.onEach { _buckets.value = it }
+            .launchIn(viewModelScope)
+    }
+
+    fun bindBirthDate(birthDate: LocalDate?) {
+        _birth.value = birthDate
+    }
+}
