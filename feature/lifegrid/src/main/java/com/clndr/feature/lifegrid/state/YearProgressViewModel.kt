@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.launchIn
 import java.time.LocalDate
@@ -25,9 +24,12 @@ class YearProgressViewModel @Inject constructor(
     val buckets: StateFlow<ProgressBuckets> = _buckets.asStateFlow()
 
     init {
+        // Always observe the live calendar cycles. The engine accepts a null birth date —
+        // decade/year/month/week/day stay calendar-relative (matching the web design), and a
+        // bound birth date only adds the otherwise-unused era track.
         @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
         _birth.flatMapLatest { birth ->
-            if (birth != null) getYearProgress(birth) else flowOf(ProgressBuckets.EMPTY)
+            getYearProgress(birth)
         }.onEach { _buckets.value = it }
             .launchIn(viewModelScope)
     }

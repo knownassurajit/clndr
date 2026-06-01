@@ -1,7 +1,11 @@
 package com.clndr.app.shell
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -10,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -21,23 +26,35 @@ import com.clndr.app.widget.PinWidgetHelper
 import com.clndr.core.designsystem.components.ClndrNavBar
 import com.clndr.core.designsystem.components.ClndrNavItem
 import com.clndr.core.designsystem.components.ClndrTopBar
+import com.clndr.core.designsystem.theme.clndr
 import com.clndr.feature.lifegrid.LifeGridScreen
 import com.clndr.feature.lifegrid.YearCalendarScreen
 import com.clndr.feature.lifegrid.YearProgressScreen
 import com.clndr.feature.milestones.MilestoneEditScreen
 import com.clndr.feature.milestones.MilestonesListScreen
 import com.clndr.feature.widgets.year.YearProgressWidgetReceiver
-import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClndrShell(
     settingsViewModel: SettingsViewModel = hiltViewModel(),
 ) {
+    val ready by settingsViewModel.ready.collectAsState()
+    val settings by settingsViewModel.state.collectAsState()
+
+    if (!ready) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.clndr.screen))
+        return
+    }
+
+    if (settings.birthDate == null) {
+        OnboardingScreen(onDone = { settingsViewModel.setBirthDate(it) })
+        return
+    }
+
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
-    val settings by settingsViewModel.state.collectAsState()
     val ctx = LocalContext.current
 
     var showAbout by remember { mutableStateOf(false) }
@@ -48,6 +65,7 @@ fun ClndrShell(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.clndr.screen,
         topBar = {
             ClndrTopBar(
                 title = currentTitle(currentRoute),
@@ -61,7 +79,7 @@ fun ClndrShell(
                 currentRoute = currentRoute,
                 onSelect = { item ->
                     nav.navigate(item.route) {
-                        popUpTo(Destination.Life.route)
+                        popUpTo(Destination.Progress.route)
                         launchSingleTop = true
                     }
                 },
@@ -70,7 +88,7 @@ fun ClndrShell(
     ) { padding ->
         NavHost(
             navController = nav,
-            startDestination = Destination.Life.route,
+            startDestination = Destination.Progress.route,
             modifier = Modifier.padding(padding),
         ) {
             composable(Destination.Life.route) {
@@ -80,7 +98,7 @@ fun ClndrShell(
                 YearCalendarScreen()
             }
             composable(Destination.Progress.route) {
-                YearProgressScreen(birthDate = settings.birthDate)
+                YearProgressScreen()
             }
             composable(Destination.Milestones.route) {
                 MilestonesListScreen(
@@ -101,7 +119,6 @@ fun ClndrShell(
     if (showSettings) {
         SettingsSheet(
             onDismiss = { showSettings = false },
-            onEditBirthDate = { /* date-picker hook — left as a follow-up */ },
             onPinWidget = {
                 PinWidgetHelper.requestPin(ctx, YearProgressWidgetReceiver::class.java)
             },
@@ -110,9 +127,9 @@ fun ClndrShell(
 }
 
 private fun currentTitle(route: String?): String = when (route) {
-    Destination.Life.route -> "Life"
-    Destination.Year.route -> "Year"
-    Destination.Progress.route -> "Now"
-    Destination.Milestones.route -> "Goals"
+    Destination.Life.route -> "Your Life"
+    Destination.Year.route -> "This Year"
+    Destination.Progress.route -> "In Progress"
+    Destination.Milestones.route -> "Milestones"
     else -> "clndr"
 }

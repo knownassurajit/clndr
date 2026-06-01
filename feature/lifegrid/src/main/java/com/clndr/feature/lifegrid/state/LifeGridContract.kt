@@ -5,7 +5,7 @@ import java.time.LocalDate
 
 data class LifeGridState(
     val birthDate: LocalDate? = null,
-    val granularity: Granularity = Granularity.WEEKS,
+    val granularity: Granularity = Granularity.DAYS,
     val packedStates: IntArray = IntArray(0),
     val currentIndex: Int = -1,
     val totalCells: Int = 0,

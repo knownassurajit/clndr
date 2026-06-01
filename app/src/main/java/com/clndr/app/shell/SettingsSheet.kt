@@ -31,26 +31,25 @@ class SettingsViewModel @Inject constructor(
     )
     val state: StateFlow<ClndrSettingsState> = _state.asStateFlow()
 
+    /** True once persisted settings have been read at least once — gates the onboarding flash. */
+    private val _ready = MutableStateFlow(false)
+    val ready: StateFlow<Boolean> = _ready.asStateFlow()
+
     init {
         combine(repo.birthDate, repo.themeMode, repo.sunriseAutoEnabled) { birth, theme, sun ->
             ClndrSettingsState(birthDate = birth, themeMode = theme, sunriseAutoEnabled = sun)
-        }.onEach { _state.value = it }.launchIn(viewModelScope)
+        }.onEach {
+            _state.value = it
+            _ready.value = true
+        }.launchIn(viewModelScope)
     }
 
     fun setBirthDate(date: LocalDate?) {
         viewModelScope.launch { repo.setBirthDate(date) }
     }
 
-    fun cycleThemeMode() {
-        viewModelScope.launch {
-            val next = when (_state.value.themeMode) {
-                ThemeMode.FOLLOW_SYSTEM -> ThemeMode.FORCE_LIGHT
-                ThemeMode.FORCE_LIGHT -> ThemeMode.FORCE_DARK
-                ThemeMode.FORCE_DARK -> ThemeMode.SUNRISE_AUTO
-                ThemeMode.SUNRISE_AUTO -> ThemeMode.FOLLOW_SYSTEM
-            }
-            repo.setThemeMode(next)
-        }
+    fun setThemeMode(mode: ThemeMode) {
+        viewModelScope.launch { repo.setThemeMode(mode) }
     }
 
     fun setSunriseAuto(enabled: Boolean) {
@@ -61,7 +60,6 @@ class SettingsViewModel @Inject constructor(
 @Composable
 fun SettingsSheet(
     onDismiss: () -> Unit,
-    onEditBirthDate: () -> Unit,
     onPinWidget: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -69,9 +67,9 @@ fun SettingsSheet(
     ClndrSettingsSheet(
         state = state,
         onDismiss = onDismiss,
-        onEditBirthDate = onEditBirthDate,
+        onSetBirthDate = { date -> viewModel.setBirthDate(date) },
+        onSetThemeMode = viewModel::setThemeMode,
         onToggleSunriseAuto = viewModel::setSunriseAuto,
-        onCycleThemeMode = viewModel::cycleThemeMode,
         onPinWidget = onPinWidget,
     )
 }

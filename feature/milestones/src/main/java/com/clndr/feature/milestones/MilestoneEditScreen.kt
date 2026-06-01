@@ -1,29 +1,50 @@
 package com.clndr.feature.milestones
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.clndr.core.designsystem.components.ClndrDatePickerDialog
+import com.clndr.core.designsystem.components.SubHead
+import com.clndr.core.designsystem.theme.clndr
 import com.clndr.feature.milestones.state.MilestoneEditEffect
 import com.clndr.feature.milestones.state.MilestoneEditViewModel
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+private val DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.US)
 
 @Composable
 fun MilestoneEditScreen(
@@ -32,14 +53,15 @@ fun MilestoneEditScreen(
     viewModel: MilestoneEditViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val palette = MaterialTheme.clndr
+    val isNew = state.draft.id == 0L
+    var showPicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             when (effect) {
                 is MilestoneEditEffect.NavigateBack -> onDone()
-                is MilestoneEditEffect.RequestExactAlarmPermission -> {
-                    // Handled by the host (MainActivity) — surfaced via shared effects bus.
-                }
+                is MilestoneEditEffect.RequestExactAlarmPermission -> Unit
             }
         }
     }
@@ -47,81 +69,148 @@ fun MilestoneEditScreen(
     Column(
         modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .background(palette.screen)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 22.dp)
+            .padding(top = 8.dp, bottom = 28.dp),
     ) {
         Text(
-            if (state.draft.id == 0L) "New milestone" else "Edit milestone",
+            if (isNew) "New milestone" else "Edit milestone",
             style = MaterialTheme.typography.headlineSmall,
+            color = palette.txtHi,
+        )
+        Text(
+            "Anchor a moment. Past or future — clndr never deletes it.",
+            style = MaterialTheme.typography.bodySmall,
+            color = palette.txtLow,
+            modifier = Modifier.padding(top = 4.dp, bottom = 20.dp),
         )
 
+        FieldLabel("What is it?")
         OutlinedTextField(
             value = state.draft.title,
             onValueChange = { v -> viewModel.update { it.copy(title = v) } },
-            label = { Text("Title") },
+            placeholder = { Text("Goal: finish refactoring") },
+            singleLine = true,
             isError = state.errors.containsKey("title"),
             supportingText = { state.errors["title"]?.let { Text(it) } },
+            colors = fieldColors(),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth(),
         )
 
+        Spacer(Modifier.height(16.dp))
+        FieldLabel("Notes")
         OutlinedTextField(
             value = state.draft.description,
             onValueChange = { v -> viewModel.update { it.copy(description = v) } },
-            label = { Text("Description") },
-            modifier = Modifier.fillMaxWidth(),
             minLines = 2,
-        )
-
-        OutlinedTextField(
-            value = state.draft.targetDate.toString(),
-            onValueChange = { v ->
-                runCatching { java.time.LocalDate.parse(v) }
-                    .onSuccess { parsed -> viewModel.update { it.copy(targetDate = parsed) } }
-            },
-            label = { Text("Target date (YYYY-MM-DD)") },
+            colors = fieldColors(),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth(),
         )
 
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+        Spacer(Modifier.height(16.dp))
+        FieldLabel("Date")
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(palette.surface)
+                .border(1.dp, palette.line, RoundedCornerShape(12.dp))
+                .clickable { showPicker = true }
+                .padding(horizontal = 14.dp, vertical = 14.dp),
         ) {
-            Text("Reminder", style = MaterialTheme.typography.titleMedium)
-            Switch(
-                checked = state.draft.reminderEnabled,
-                onCheckedChange = { v -> viewModel.update { it.copy(reminderEnabled = v) } },
-            )
+            Text(state.draft.targetDate.format(DATE_FMT), style = MaterialTheme.typography.bodyLarge, color = palette.txtHi)
         }
 
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text("Add to system calendar", style = MaterialTheme.typography.titleMedium)
-            Switch(
-                checked = state.draft.mirrorToCalendar,
-                onCheckedChange = { v -> viewModel.update { it.copy(mirrorToCalendar = v) } },
-            )
-        }
+        Spacer(Modifier.height(16.dp))
+        ToggleRow(
+            title = "Set a system reminder",
+            sub = "Adds an alarm via the device",
+            checked = state.draft.reminderEnabled,
+            onChange = { v -> viewModel.update { it.copy(reminderEnabled = v) } },
+        )
+        ToggleRow(
+            title = "Add to system calendar",
+            sub = "Mirrors this milestone as an all-day event",
+            checked = state.draft.mirrorToCalendar,
+            onChange = { v -> viewModel.update { it.copy(mirrorToCalendar = v) } },
+        )
 
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (state.draft.id != 0L) {
-                OutlinedButton(
-                    onClick = { viewModel.delete() },
-                    modifier = Modifier.weight(1f),
-                ) { Text("Delete") }
+        Spacer(Modifier.height(20.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (!isNew) {
+                OutlinedButton(onClick = { viewModel.delete() }, modifier = Modifier.weight(1f)) {
+                    Text("Delete")
+                }
             }
             Button(
                 onClick = { viewModel.save() },
-                modifier = Modifier.weight(1f),
                 enabled = !state.isSaving,
-            ) { Text(if (state.isSaving) "Saving…" else "Save") }
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = palette.nodeLived,
+                    contentColor = palette.screen,
+                ),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(if (state.isSaving) "Saving…" else if (isNew) "Anchor milestone" else "Save changes")
+            }
         }
     }
+
+    if (showPicker) {
+        ClndrDatePickerDialog(
+            initialDate = state.draft.targetDate,
+            onDismiss = { showPicker = false },
+            onConfirm = { picked -> viewModel.update { it.copy(targetDate = picked) } },
+        )
+    }
 }
+
+@Composable
+private fun FieldLabel(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.clndr.txtMid,
+        modifier = Modifier.padding(bottom = 7.dp),
+    )
+}
+
+@Composable
+private fun ToggleRow(title: String, sub: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    val palette = MaterialTheme.clndr
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, color = palette.txtHi)
+            Text(sub, style = MaterialTheme.typography.bodySmall, color = palette.txtLow)
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = palette.screen,
+                checkedTrackColor = palette.nodeLived,
+                uncheckedThumbColor = palette.screen,
+                uncheckedTrackColor = palette.nodeFuture,
+                uncheckedBorderColor = palette.nodeFuture,
+            ),
+        )
+    }
+}
+
+@Composable
+private fun fieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = MaterialTheme.clndr.txtHi,
+    unfocusedTextColor = MaterialTheme.clndr.txtHi,
+    focusedContainerColor = MaterialTheme.clndr.surface,
+    unfocusedContainerColor = MaterialTheme.clndr.surface,
+    focusedBorderColor = MaterialTheme.clndr.lineStrong,
+    unfocusedBorderColor = MaterialTheme.clndr.line,
+    cursorColor = MaterialTheme.clndr.txtHi,
+)

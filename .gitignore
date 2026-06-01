@@ -3,6 +3,7 @@
 build/
 local.properties
 gradle/**/build/
+*.gradle.bak
 
 # IntelliJ / Android Studio
 *.iml
@@ -11,27 +12,61 @@ gradle/**/build/
 *.ipr
 out/
 captures/
+.externalNativeBuild/
 .cxx/
+.settings/
+
+# IDE & Editor
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+.project
 
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
 # Android build outputs
 *.apk
 *.aab
 *.ap_
+*.aar
 *.dex
 *.class
+*.so
 
-# Signing
+# Signing (keep keystore.properties but ignore actual keystores)
 *.keystore
 *.jks
-keystore.properties
+*.key
 
 # Logs
 *.log
 hs_err_pid*
 
-# KSP / kotlin
+# KSP / Kotlin generated code
 .kotlin/
+build/
+out/
+
+# Web/Node dependencies (clndr project)
+node_modules/
+.npm
+npm-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Build cache
+*.o
+*.out
+
+# References (top-level web prototype only — anchored so it doesn't match the com/clndr/ package path)
+/clndr/
