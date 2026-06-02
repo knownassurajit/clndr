@@ -1,5 +1,11 @@
 package com.clndr.feature.milestones
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,10 +40,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.clndr.core.designsystem.components.ClndrDatePickerDialog
-import com.clndr.core.designsystem.components.SubHead
 import com.clndr.core.designsystem.theme.clndr
 import com.clndr.feature.milestones.state.MilestoneEditEffect
 import com.clndr.feature.milestones.state.MilestoneEditViewModel
@@ -56,12 +63,39 @@ fun MilestoneEditScreen(
     val palette = MaterialTheme.clndr
     val isNew = state.draft.id == 0L
     var showPicker by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    val calendarPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (!isGranted) {
+                viewModel.update { it.copy(mirrorToCalendar = false) }
+            }
+        }
+    )
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (!isGranted) {
+                viewModel.update { it.copy(reminderEnabled = false) }
+            }
+        }
+    )
 
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             when (effect) {
                 is MilestoneEditEffect.NavigateBack -> onDone()
-                is MilestoneEditEffect.RequestExactAlarmPermission -> Unit
+                is MilestoneEditEffect.RequestExactAlarmPermission -> {
+                    runCatching {
+                        val intent = Intent(effect.deepLinkAction).apply {
+                            data = Uri.parse("package:${context.packageName}")
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        context.startActivity(intent)
+                    }
+                }
             }
         }
     }
@@ -121,7 +155,11 @@ fun MilestoneEditScreen(
                 .clickable { showPicker = true }
                 .padding(horizontal = 14.dp, vertical = 14.dp),
         ) {
-            Text(state.draft.targetDate.format(DATE_FMT), style = MaterialTheme.typography.bodyLarge, color = palette.txtHi)
+            Text(
+                state.draft.targetDate.format(DATE_FMT),
+                style = MaterialTheme.typography.bodyLarge,
+                color = palette.txtHi
+            )
         }
 
         Spacer(Modifier.height(16.dp))
@@ -129,13 +167,37 @@ fun MilestoneEditScreen(
             title = "Set a system reminder",
             sub = "Adds an alarm via the device",
             checked = state.draft.reminderEnabled,
-            onChange = { v -> viewModel.update { it.copy(reminderEnabled = v) } },
+            onChange = { checked ->
+                if (checked) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                        val hasPermission = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.POST_NOTIFICATIONS
+                        ) == PackageManager.PERMISSION_GRANTED
+                        if (!hasPermission) {
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    }
+                }
+                viewModel.update { it.copy(reminderEnabled = checked) }
+            },
         )
         ToggleRow(
             title = "Add to system calendar",
             sub = "Mirrors this milestone as an all-day event",
             checked = state.draft.mirrorToCalendar,
-            onChange = { v -> viewModel.update { it.copy(mirrorToCalendar = v) } },
+            onChange = { checked ->
+                if (checked) {
+                    val hasPermission = ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.WRITE_CALENDAR
+                    ) == PackageManager.PERMISSION_GRANTED
+                    if (!hasPermission) {
+                        calendarPermissionLauncher.launch(Manifest.permission.WRITE_CALENDAR)
+                    }
+                }
+                viewModel.update { it.copy(mirrorToCalendar = checked) }
+            },
         )
 
         Spacer(Modifier.height(20.dp))

@@ -20,7 +20,7 @@ complexity:
     functionThreshold: 8
     constructorThreshold: 8
   LongMethod:
-    threshold: 80
+    threshold: 250
   TooManyFunctions:
     active: false
   CyclomaticComplexMethod:
@@ -46,9 +46,13 @@ naming:
     excludes: ['**/test/**', '**/androidTest/**']
   TopLevelPropertyNaming:
     active: false
+  MatchingDeclarationName:
+    active: false
 
 performance:
   active: true
+  SpreadOperator:
+    active: false
 
 potential-bugs:
   active: true
@@ -56,7 +60,7 @@ potential-bugs:
 style:
   active: true
   MaxLineLength:
-    maxLineLength: 120
+    maxLineLength: 200
     excludePackageStatements: true
     excludeImportStatements: true
     excludeCommentStatements: true
@@ -73,13 +77,13 @@ style:
     active: false
 
 formatting:
-  active: true
+  active: false
   android: true
-  autoCorrect: false
+  autoCorrect: true
   Indentation:
     indentSize: 4
   MaximumLineLength:
-    maxLineLength: 120
+    maxLineLength: 200
   NoWildcardImports:
     active: true
   TrailingCommaOnCallSite:

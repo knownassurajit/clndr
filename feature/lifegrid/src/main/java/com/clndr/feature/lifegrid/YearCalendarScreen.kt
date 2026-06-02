@@ -94,7 +94,11 @@ fun YearCalendarScreen(
                 Spacer(Modifier.height(9.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("${format1(pct)}% spent", style = MaterialTheme.typography.bodySmall, color = palette.txtMid)
-                    Text("$remaining days remaining", style = MaterialTheme.typography.bodySmall, color = palette.txtMid)
+                    Text(
+                        "$remaining days remaining",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = palette.txtMid
+                    )
                 }
             }
         }

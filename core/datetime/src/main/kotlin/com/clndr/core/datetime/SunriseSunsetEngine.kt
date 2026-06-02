@@ -113,7 +113,9 @@ class SunriseSunsetEngine {
         val minutes = ((utHours - whole) * MINUTES_PER_HOUR).toLong()
         val seconds = ((utHours - whole - minutes / MINUTES_PER_HOUR.toDouble()) * SECONDS_PER_MINUTE_D).toLong()
         return ZonedDateTime.of(
-            date.year, date.monthValue, date.dayOfMonth,
+            date.year,
+            date.monthValue,
+            date.dayOfMonth,
             whole.toInt() % HOURS_PER_DAY_INT,
             minutes.toInt() % MINUTES_PER_HOUR_INT,
             seconds.toInt() % MINUTES_PER_HOUR_INT,

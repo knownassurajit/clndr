@@ -82,7 +82,12 @@ fun LifeGridScreen(
                     verticalAlignment = Alignment.Bottom,
                 ) {
                     Text(format1(lifePct), style = ClndrText.numLarge.copy(fontSize = 52.sp), color = palette.txtHi)
-                    Text(" %", style = ClndrText.numSmall, color = palette.txtLow, modifier = Modifier.padding(bottom = 6.dp))
+                    Text(
+                        " %",
+                        style = ClndrText.numSmall,
+                        color = palette.txtLow,
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
                     Spacer(Modifier.weight(1f))
                     Text(
                         "${formatInt(livedUnits.toLong())} lived\n${formatInt(remainingUnits.toLong())} left",
@@ -139,11 +144,19 @@ private fun Legend() {
         }
         Spacer(Modifier.width(18.dp))
         LegendItem("Unspent") {
-            Box(Modifier.size(11.dp).clip(RoundedCornerShape(2.5.dp)).border(1.4.dp, palette.nodeFuture, RoundedCornerShape(2.5.dp)))
+            Box(
+                Modifier.size(
+                    11.dp
+                ).clip(RoundedCornerShape(2.5.dp)).border(1.4.dp, palette.nodeFuture, RoundedCornerShape(2.5.dp))
+            )
         }
         Spacer(Modifier.width(18.dp))
         LegendItem("Now") {
-            Box(Modifier.size(11.dp).clip(RoundedCornerShape(2.5.dp)).border(1.6.dp, palette.today, RoundedCornerShape(2.5.dp)))
+            Box(
+                Modifier.size(
+                    11.dp
+                ).clip(RoundedCornerShape(2.5.dp)).border(1.6.dp, palette.today, RoundedCornerShape(2.5.dp))
+            )
         }
     }
 }

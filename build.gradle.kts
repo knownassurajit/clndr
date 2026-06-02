@@ -14,7 +14,17 @@ detekt {
     allRules = false
     config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
     parallel = true
-    autoCorrect = false
+    autoCorrect = true
+    source.setFrom(files(
+        "app/src/main/java",
+        "core/database/src/main/java",
+        "core/datetime/src/main/kotlin",
+        "core/designsystem/src/main/java",
+        "core/domain/src/main/java",
+        "feature/lifegrid/src/main/java",
+        "feature/milestones/src/main/java",
+        "feature/widgets/src/main/java"
+    ))
 }
 
 dependencies {

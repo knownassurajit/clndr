@@ -10,7 +10,9 @@ import javax.inject.Qualifier
 import javax.inject.Singleton
 
 @Qualifier annotation class DefaultDispatcher
+
 @Qualifier annotation class IoDispatcher
+
 @Qualifier annotation class MainDispatcher
 
 @Module

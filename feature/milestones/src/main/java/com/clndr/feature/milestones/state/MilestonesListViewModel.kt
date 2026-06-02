@@ -2,7 +2,6 @@ package com.clndr.feature.milestones.state
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.clndr.core.domain.model.Milestone
 import com.clndr.core.domain.repository.MilestonesRepository
 import com.clndr.feature.milestones.model.MilestoneUi
 import com.clndr.feature.milestones.model.toUi
@@ -53,7 +52,4 @@ class MilestonesListViewModel @Inject constructor(
             repository.delete(item)
         }
     }
-
-    @Suppress("unused")
-    private fun emptyMilestone(): Milestone? = null
 }

@@ -17,17 +17,47 @@ private val ClndrUi: FontFamily = FontFamily.SansSerif
 private val ClndrNumerals: FontFamily = FontFamily.SansSerif
 
 val ClndrTypography = Typography(
-    displayLarge = TextStyle(fontFamily = ClndrUi, fontWeight = FontWeight.SemiBold, fontSize = 57.sp, letterSpacing = (-0.5).sp),
-    displayMedium = TextStyle(fontFamily = ClndrUi, fontWeight = FontWeight.SemiBold, fontSize = 45.sp, letterSpacing = (-0.5).sp),
+    displayLarge = TextStyle(
+        fontFamily = ClndrUi,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 57.sp,
+        letterSpacing = (-0.5).sp
+    ),
+    displayMedium = TextStyle(
+        fontFamily = ClndrUi,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 45.sp,
+        letterSpacing = (-0.5).sp
+    ),
     displaySmall = TextStyle(fontFamily = ClndrUi, fontWeight = FontWeight.SemiBold, fontSize = 36.sp),
-    headlineLarge = TextStyle(fontFamily = ClndrUi, fontWeight = FontWeight.SemiBold, fontSize = 30.sp, letterSpacing = (-0.5).sp),
-    headlineMedium = TextStyle(fontFamily = ClndrUi, fontWeight = FontWeight.SemiBold, fontSize = 24.sp, letterSpacing = (-0.3).sp),
+    headlineLarge = TextStyle(
+        fontFamily = ClndrUi,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 30.sp,
+        letterSpacing = (-0.5).sp
+    ),
+    headlineMedium = TextStyle(
+        fontFamily = ClndrUi,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 24.sp,
+        letterSpacing = (-0.3).sp
+    ),
     headlineSmall = TextStyle(fontFamily = ClndrUi, fontWeight = FontWeight.SemiBold, fontSize = 20.sp),
-    titleLarge = TextStyle(fontFamily = ClndrUi, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, letterSpacing = (-0.2).sp),
+    titleLarge = TextStyle(
+        fontFamily = ClndrUi,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 19.sp,
+        letterSpacing = (-0.2).sp
+    ),
     titleMedium = TextStyle(fontFamily = ClndrUi, fontWeight = FontWeight.Medium, fontSize = 15.sp),
     titleSmall = TextStyle(fontFamily = ClndrUi, fontWeight = FontWeight.Medium, fontSize = 14.sp),
     bodyLarge = TextStyle(fontFamily = ClndrUi, fontWeight = FontWeight.Normal, fontSize = 15.sp),
-    bodyMedium = TextStyle(fontFamily = ClndrUi, fontWeight = FontWeight.Normal, fontSize = 13.5.sp, lineHeight = 21.sp),
+    bodyMedium = TextStyle(
+        fontFamily = ClndrUi,
+        fontWeight = FontWeight.Normal,
+        fontSize = 13.5.sp,
+        lineHeight = 21.sp
+    ),
     bodySmall = TextStyle(fontFamily = ClndrUi, fontWeight = FontWeight.Normal, fontSize = 12.sp),
     labelLarge = TextStyle(fontFamily = ClndrUi, fontWeight = FontWeight.SemiBold, fontSize = 15.sp),
     labelMedium = TextStyle(fontFamily = ClndrUi, fontWeight = FontWeight.Medium, fontSize = 12.sp),

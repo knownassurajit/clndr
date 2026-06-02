@@ -32,7 +32,7 @@ fun ProgressLine(
         ) {
             Text(label, style = MaterialTheme.typography.titleSmall)
             Text(
-                String.format("%.2f%% / %.2f%%", pct * 100.0, (1.0 - pct) * 100.0),
+                String.format(java.util.Locale.US, "%.2f%% / %.2f%%", pct * 100.0, (1.0 - pct) * 100.0),
                 style = MaterialTheme.typography.labelMedium,
             )
         }

@@ -1,7 +1,7 @@
 package com.clndr.feature.widgets.shared
 
 import android.content.Context
-import androidx.glance.material3.ColorProviders
+import androidx.glance.color.ColorProviders
 import com.clndr.core.designsystem.theme.DarkClndrColors
 import com.clndr.core.designsystem.theme.LightClndrColors
 
@@ -12,5 +12,5 @@ import com.clndr.core.designsystem.theme.LightClndrColors
 object WidgetTheme {
 
     fun colors(@Suppress("UNUSED_PARAMETER") context: Context): ColorProviders =
-        ColorProviders(light = LightClndrColors, dark = DarkClndrColors)
+        androidx.glance.material3.ColorProviders(light = LightClndrColors, dark = DarkClndrColors)
 }

@@ -37,6 +37,7 @@ class SettingsViewModel @Inject constructor(
 
     init {
         combine(repo.birthDate, repo.themeMode, repo.sunriseAutoEnabled) { birth, theme, sun ->
+            println("CLNDR_TEST: SettingsViewModel combine emit: birth=$birth, theme=$theme, sun=$sun")
             ClndrSettingsState(birthDate = birth, themeMode = theme, sunriseAutoEnabled = sun)
         }.onEach {
             _state.value = it

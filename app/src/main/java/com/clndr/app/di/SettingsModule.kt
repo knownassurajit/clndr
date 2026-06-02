@@ -23,4 +23,16 @@ object SettingsModule {
     @Singleton
     fun provideNotificationManager(@ApplicationContext ctx: Context): NotificationManager =
         ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+    @Provides
+    @Singleton
+    fun provideMilestoneScheduler(
+        impl: com.clndr.app.reminders.MilestoneReminderScheduler
+    ): com.clndr.core.domain.scheduler.MilestoneScheduler = impl
+
+    @Provides
+    @Singleton
+    fun provideCalendarManager(
+        impl: com.clndr.app.reminders.CalendarMirror
+    ): com.clndr.core.domain.calendar.CalendarManager = impl
 }

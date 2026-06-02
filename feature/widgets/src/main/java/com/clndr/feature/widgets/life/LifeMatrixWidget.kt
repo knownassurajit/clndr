@@ -52,8 +52,11 @@ private fun LifeMatrixGlance(current: Int, total: Int) {
             .padding(12.dp),
     ) {
         Text(
-            if (total > 0) "Weeks lived: $current of $total"
-            else "Set your date of birth in clndr to render the life matrix.",
+            if (total > 0) {
+                "Weeks lived: $current of $total"
+            } else {
+                "Set your date of birth in clndr to render the life matrix."
+            },
         )
     }
 }

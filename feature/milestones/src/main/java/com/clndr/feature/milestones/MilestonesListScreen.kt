@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.clndr.core.designsystem.components.ClndrCard
 import com.clndr.core.designsystem.components.Eyebrow
 import com.clndr.core.designsystem.components.SubHead
@@ -42,7 +43,6 @@ import com.clndr.feature.milestones.state.MilestonesListViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import androidx.hilt.navigation.compose.hiltViewModel
 import kotlin.math.abs
 
 private val DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.US)
@@ -103,7 +103,12 @@ private fun AddButton(onAdd: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         Icon(Icons.Outlined.Add, contentDescription = null, tint = palette.screen, modifier = Modifier.size(16.dp))
-        Text("Add", style = MaterialTheme.typography.labelMedium, color = palette.screen, fontWeight = FontWeight.SemiBold)
+        Text(
+            "Add",
+            style = MaterialTheme.typography.labelMedium,
+            color = palette.screen,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 
@@ -121,7 +126,9 @@ private fun MilestoneCard(
         days == 0L -> "Today" to "today"
         else -> "Count-up" to "days since"
     }
-    Box(Modifier.fillMaxWidth().padding(bottom = 12.dp).clip(MaterialTheme.shapes.medium).clickable { onEdit(item.id) }) {
+    Box(
+        Modifier.fillMaxWidth().padding(bottom = 12.dp).clip(MaterialTheme.shapes.medium).clickable { onEdit(item.id) }
+    ) {
         ClndrCard {
             Column {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -134,18 +141,38 @@ private fun MilestoneCard(
                             .clickable { onDelete(item.id) },
                         contentAlignment = Alignment.Center,
                     ) {
-                        Icon(Icons.Outlined.DeleteOutline, contentDescription = "Delete", tint = palette.txtMid, modifier = Modifier.size(18.dp))
+                        Icon(
+                            Icons.Outlined.DeleteOutline,
+                            contentDescription = "Delete",
+                            tint = palette.txtMid,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
-                Text(item.title, style = MaterialTheme.typography.titleLarge, color = palette.txtHi, modifier = Modifier.padding(top = 6.dp))
-                Text(item.targetDate.format(DATE_FMT), style = MaterialTheme.typography.bodySmall, color = palette.txtLow, modifier = Modifier.padding(top = 2.dp))
+                Text(
+                    item.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = palette.txtHi,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+                Text(
+                    item.targetDate.format(DATE_FMT),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = palette.txtLow,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
                 Row(
                     Modifier.fillMaxWidth().padding(top = 14.dp),
                     verticalAlignment = Alignment.Bottom,
                     horizontalArrangement = Arrangement.spacedBy(9.dp),
                 ) {
                     Text(formatInt(abs(days)), style = ClndrText.numLarge, color = palette.txtHi)
-                    Text(label, style = MaterialTheme.typography.bodyMedium, color = palette.txtMid, modifier = Modifier.padding(bottom = 8.dp))
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = palette.txtMid,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
                 }
             }
         }

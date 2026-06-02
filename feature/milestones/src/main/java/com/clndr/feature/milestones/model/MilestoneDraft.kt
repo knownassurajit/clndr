@@ -44,4 +44,5 @@ fun Milestone.toDraft(): MilestoneDraft = MilestoneDraft(
     targetTime = targetTime,
     reminderEnabled = reminderEnabled,
     reminderLeadMinutes = reminderLeadMinutes,
+    mirrorToCalendar = calendarEventId != null,
 )

@@ -1,8 +1,10 @@
 package com.clndr.app.reminders
 
 import android.content.ContentResolver
+import android.content.ContentUris
 import android.content.ContentValues
 import android.provider.CalendarContract
+import com.clndr.core.domain.calendar.CalendarManager
 import com.clndr.core.domain.model.Milestone
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -15,13 +17,19 @@ import javax.inject.Singleton
 @Singleton
 class CalendarMirror @Inject constructor(
     @ApplicationContext private val context: android.content.Context,
-) {
+) : CalendarManager {
 
-    fun upsert(milestone: Milestone): Long? {
+    override fun upsert(milestone: Milestone): Long? {
         val resolver: ContentResolver = context.contentResolver
         val values = ContentValues().apply {
-            put(CalendarContract.Events.DTSTART, milestone.targetDate.atStartOfDay(milestone.zoneId).toInstant().toEpochMilli())
-            put(CalendarContract.Events.DTEND, milestone.targetDate.atStartOfDay(milestone.zoneId).toInstant().toEpochMilli() + ONE_HOUR_MS)
+            put(
+                CalendarContract.Events.DTSTART,
+                milestone.targetDate.atStartOfDay(milestone.zoneId).toInstant().toEpochMilli()
+            )
+            put(
+                CalendarContract.Events.DTEND,
+                milestone.targetDate.atStartOfDay(milestone.zoneId).toInstant().toEpochMilli() + ONE_HOUR_MS
+            )
             put(CalendarContract.Events.TITLE, milestone.title)
             milestone.description?.let { put(CalendarContract.Events.DESCRIPTION, it) }
             put(CalendarContract.Events.EVENT_TIMEZONE, milestone.zoneId.id)
@@ -31,6 +39,14 @@ class CalendarMirror @Inject constructor(
             val uri = resolver.insert(CalendarContract.Events.CONTENT_URI, values) ?: return null
             uri.lastPathSegment?.toLongOrNull()
         }.getOrNull()
+    }
+
+    override fun delete(calendarEventId: Long): Boolean {
+        val resolver: ContentResolver = context.contentResolver
+        val uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, calendarEventId)
+        return runCatching {
+            resolver.delete(uri, null, null) > 0
+        }.getOrDefault(false)
     }
 
     companion object {

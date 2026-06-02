@@ -19,6 +19,22 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            val storeFilePath = System.getenv("CLNDR_STORE_FILE")
+            val storePasswordEnv = System.getenv("CLNDR_STORE_PASSWORD")
+            val keyAliasEnv = System.getenv("CLNDR_KEY_ALIAS")
+            val keyPasswordEnv = System.getenv("CLNDR_KEY_PASSWORD")
+
+            if (!storeFilePath.isNullOrEmpty() && file(storeFilePath).exists()) {
+                storeFile = file(storeFilePath)
+                storePassword = storePasswordEnv
+                keyAlias = keyAliasEnv
+                keyPassword = keyPasswordEnv
+            }
+        }
+    }
+
     buildTypes {
         debug {
             isMinifyEnabled = false
@@ -29,6 +45,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            val storeFilePath = System.getenv("CLNDR_STORE_FILE")
+            if (!storeFilePath.isNullOrEmpty() && file(storeFilePath).exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
@@ -51,6 +71,12 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -61,6 +87,8 @@ dependencies {
     implementation(project(":feature:lifegrid"))
     implementation(project(":feature:milestones"))
     implementation(project(":feature:widgets"))
+
+    implementation(libs.glance.appwidget)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -96,5 +124,13 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.mockk)
     testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
     androidTestImplementation(libs.androidx.junit)
+}
+
+tasks.withType<Test> {
+    testLogging {
+        showStandardStreams = true
+    }
 }

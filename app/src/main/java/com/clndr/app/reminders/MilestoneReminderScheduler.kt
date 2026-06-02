@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import com.clndr.core.domain.model.Milestone
+import com.clndr.core.domain.scheduler.MilestoneScheduler
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalTime
 import java.time.ZoneId
@@ -16,9 +17,9 @@ import javax.inject.Singleton
 class MilestoneReminderScheduler @Inject constructor(
     @ApplicationContext private val ctx: Context,
     private val alarmManager: AlarmManager,
-) {
+) : MilestoneScheduler {
 
-    fun schedule(milestone: Milestone) {
+    override fun schedule(milestone: Milestone) {
         if (!milestone.reminderEnabled) {
             cancel(milestone.id)
             return
@@ -36,11 +37,11 @@ class MilestoneReminderScheduler @Inject constructor(
         }
     }
 
-    fun cancel(id: Long) {
+    override fun cancel(id: Long) {
         alarmManager.cancel(pendingIntentFor(id))
     }
 
-    fun canScheduleExact(): Boolean =
+    override fun canScheduleExact(): Boolean =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             alarmManager.canScheduleExactAlarms()
         } else {

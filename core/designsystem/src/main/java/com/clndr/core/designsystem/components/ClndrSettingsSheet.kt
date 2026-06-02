@@ -3,7 +3,6 @@ package com.clndr.core.designsystem.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -125,7 +124,12 @@ fun ClndrSettingsSheet(
 
 @Composable
 private fun FieldLabel(text: String) {
-    Text(text, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.clndr.txtMid, modifier = Modifier.padding(bottom = 7.dp))
+    Text(
+        text,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.clndr.txtMid,
+        modifier = Modifier.padding(bottom = 7.dp)
+    )
 }
 
 @Composable

@@ -2,7 +2,7 @@ name: CI/CD
 
 on:
   push:
-    branches: [develop, main]
+    branches: [develop, master]
   pull_request:
   workflow_dispatch:
 
@@ -28,7 +28,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
-          cache-read-only: ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/main' }}
+          cache-read-only: ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/master' }}
 
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v3
@@ -73,14 +73,18 @@ jobs:
           if-no-files-found: ignore
 
   release:
-    name: Release bundle
+    name: Create Release
     needs: build-test
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -90,6 +94,34 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
+
+      - name: Determine Release Info
+        id: release_info
+        run: |
+          VERSION_NAME=$(grep "versionName =" app/build.gradle.kts | head -n 1 | awk -F'"' '{print $2}')
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            echo "TAG_NAME=v$VERSION_NAME" >> $GITHUB_ENV
+            echo "RELEASE_NAME=Release v$VERSION_NAME" >> $GITHUB_ENV
+            echo "PRERELEASE=false" >> $GITHUB_ENV
+            echo "MAKE_LATEST=true" >> $GITHUB_ENV
+          else
+            echo "TAG_NAME=v$VERSION_NAME-dev.${{ github.run_number }}" >> $GITHUB_ENV
+            echo "RELEASE_NAME=Pre-release v$VERSION_NAME-dev.${{ github.run_number }}" >> $GITHUB_ENV
+            echo "PRERELEASE=true" >> $GITHUB_ENV
+            echo "MAKE_LATEST=false" >> $GITHUB_ENV
+          fi
+
+      - name: Generate Release Body
+        run: |
+          echo "### Release Details" > release_body.md
+          echo "- **Branch:** ${{ github.ref_name }}" >> release_body.md
+          echo "- **Build Time:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> release_body.md
+          echo "- **Workflow Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> release_body.md
+          echo "" >> release_body.md
+          echo "### Changelog (Latest Commits)" >> release_body.md
+          git log --oneline -n 20 --no-merges >> release_body.md
 
       - name: Decode keystore
         env:
@@ -101,17 +133,26 @@ jobs:
           fi
           echo "$KEYSTORE_B64" | base64 -d > keystore.jks
 
-      - name: Assemble release bundle
+      - name: Build Android Artifacts
         env:
           CLNDR_STORE_FILE: ${{ github.workspace }}/keystore.jks
           CLNDR_STORE_PASSWORD: ${{ secrets.CLNDR_STORE_PASSWORD }}
           CLNDR_KEY_ALIAS: ${{ secrets.CLNDR_KEY_ALIAS }}
           CLNDR_KEY_PASSWORD: ${{ secrets.CLNDR_KEY_PASSWORD }}
-        run: ./gradlew bundleRelease --no-daemon
+        run: ./gradlew assembleDebug assembleRelease bundleRelease --no-daemon
 
-      - name: Upload AAB
-        uses: actions/upload-artifact@v4
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: clndr-app-release
-          path: app/build/outputs/bundle/release/*.aab
-          if-no-files-found: warn
+          tag_name: ${{ env.TAG_NAME }}
+          name: ${{ env.RELEASE_NAME }}
+          body_path: release_body.md
+          draft: false
+          prerelease: ${{ env.PRERELEASE == 'true' }}
+          make_latest: ${{ env.MAKE_LATEST }}
+          files: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

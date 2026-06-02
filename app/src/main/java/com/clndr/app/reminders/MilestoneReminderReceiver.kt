@@ -19,6 +19,7 @@ import javax.inject.Inject
 class MilestoneReminderReceiver : BroadcastReceiver() {
 
     @Inject lateinit var repository: MilestonesRepository
+
     @Inject lateinit var notificationManager: NotificationManager
 
     override fun onReceive(context: Context, intent: Intent) {

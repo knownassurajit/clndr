@@ -130,7 +130,11 @@ private fun HeroCard(year: Int, yearPct: Double) {
             Spacer(Modifier.height(11.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("${format2(spent)}% spent", style = MaterialTheme.typography.bodyMedium, color = palette.txtHi)
-                Text("${format2(100.0 - spent)}% left", style = MaterialTheme.typography.bodyMedium, color = palette.txtLow)
+                Text(
+                    "${format2(100.0 - spent)}% left",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = palette.txtLow
+                )
             }
         }
     }

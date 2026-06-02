@@ -42,18 +42,45 @@ class SettingsRepository @Inject constructor(
     }
 
     suspend fun setBirthDate(date: LocalDate?) {
+        println("CLNDR_TEST: setBirthDate called with date=$date")
         context.dataStore.edit { prefs ->
-            if (date == null) prefs.remove(KEY_BIRTH_EPOCH_DAY)
-            else prefs[KEY_BIRTH_EPOCH_DAY] = date.toEpochDay()
+            println("CLNDR_TEST: datastore edit block starting, current val = ${prefs[KEY_BIRTH_EPOCH_DAY]}")
+            if (date == null) {
+                prefs.remove(KEY_BIRTH_EPOCH_DAY)
+            } else {
+                prefs[KEY_BIRTH_EPOCH_DAY] = date.toEpochDay()
+            }
+            println("CLNDR_TEST: datastore edit block finished, new val = ${prefs[KEY_BIRTH_EPOCH_DAY]}")
+        }
+        println("CLNDR_TEST: datastore edit completed")
+        runCatching {
+            val sharedPrefs = context.getSharedPreferences("clndr_settings", Context.MODE_PRIVATE)
+            sharedPrefs.edit().apply {
+                if (date == null) {
+                    remove("birth_epoch_day")
+                } else {
+                    putLong("birth_epoch_day", date.toEpochDay())
+                }
+                apply()
+            }
+        }
+        runCatching {
+            com.clndr.feature.widgets.shared.WidgetUpdater.updateAll(context)
         }
     }
 
     suspend fun setThemeMode(mode: ThemeMode) {
         context.dataStore.edit { prefs -> prefs[KEY_THEME_MODE] = mode.name }
+        runCatching {
+            com.clndr.feature.widgets.shared.WidgetUpdater.updateAll(context)
+        }
     }
 
     suspend fun setSunriseAuto(enabled: Boolean) {
         context.dataStore.edit { prefs -> prefs[KEY_SUNRISE_AUTO] = enabled }
+        runCatching {
+            com.clndr.feature.widgets.shared.WidgetUpdater.updateAll(context)
+        }
     }
 
     suspend fun setSunriseLatitude(lat: Double) {
