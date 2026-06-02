@@ -13,9 +13,18 @@ android {
     defaultConfig {
         applicationId = "com.clndr.app"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0"
+        targetSdk = 35
+
+        // Deterministic versioning formula
+        val major = 0
+        val minor = 0
+        val patch = 0
+        val build = 2
+
+        versionCode = major * 1_000_000 + minor * 10_000 + patch * 100 + build
+        versionName = "$major.$minor.$patch.$build"
+
+        resourceConfigurations += listOf("en", "ar", "de", "es-rES", "es-rUS", "fr", "he", "hr", "hu", "in", "it", "ja", "nl", "pl", "pt-rBR", "ru-rRU", "sv", "tr", "uk", "zh")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -48,6 +57,9 @@ android {
             val storeFilePath = System.getenv("CLNDR_STORE_FILE")
             if (!storeFilePath.isNullOrEmpty() && file(storeFilePath).exists()) {
                 signingConfig = signingConfigs.getByName("release")
+            }
+            ndk {
+                debugSymbolLevel = "FULL"
             }
         }
     }

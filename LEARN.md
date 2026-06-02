@@ -45,7 +45,7 @@ designsystem, domain}`, `:feature:{lifegrid, milestones, widgets}`. Bootstrapped
 catalog, Gradle wrapper 8.9, AGP 8.6.1, Kotlin 2.0.21, Hilt 2.52, Room 2.6.1, Glance 1.1.1.
 
 **Key decisions**
-- `minSdk = 26`, `targetSdk = 34`, `compileSdk = 35`. Justification: spec says "Android 14+";
+- `minSdk = 26`, `targetSdk = 35`, `compileSdk = 35`. Justification: spec says "Android 14+";
   Glance + AlarmManager `setExactAndAllowWhileIdle` work on 26+.
 - Days granularity (~40 k cells) renders in a single `Canvas` composable with a packed
   `IntArray` (2 bits per cell) + viewport-clipped drawing. Pan/zoom updates a
