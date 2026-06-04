@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.clndr.core.datetime.Granularity
 import com.clndr.core.designsystem.components.ClndrCard
-import com.clndr.core.designsystem.components.ClndrProgressLine
 import com.clndr.core.designsystem.components.Eyebrow
 import com.clndr.core.designsystem.components.SegmentedToggle
 import com.clndr.core.designsystem.theme.ClndrText
@@ -40,8 +39,6 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 import kotlin.math.max
-
-private const val LIFESPAN_YEARS = 110L
 
 @Composable
 fun LifeGridScreen(
@@ -59,13 +56,10 @@ fun LifeGridScreen(
     }
 
     val today = LocalDate.now()
-    val livedDays = ChronoUnit.DAYS.between(birthDate, today).coerceAtLeast(0)
-    val totalDays = ChronoUnit.DAYS.between(birthDate, birthDate.plusYears(LIFESPAN_YEARS)).coerceAtLeast(1)
-    val lifePct = (livedDays.toDouble() / totalDays * 100.0)
-    val age = ChronoUnit.YEARS.between(birthDate, today)
+    val age = ChronoUnit.YEARS.between(birthDate, today).coerceAtLeast(0)
 
+    // Only ever count time *lived* — no fixed lifespan, no "remaining".
     val livedUnits = max(0, state.currentIndex)
-    val remainingUnits = (state.totalCells - livedUnits).coerceAtLeast(0)
     val unitName = state.granularity.name.lowercase(Locale.US)
 
     Column(
@@ -81,26 +75,17 @@ fun LifeGridScreen(
                     Modifier.fillMaxWidth().padding(top = 8.dp),
                     verticalAlignment = Alignment.Bottom,
                 ) {
-                    Text(format1(lifePct), style = ClndrText.numLarge.copy(fontSize = 52.sp), color = palette.txtHi)
+                    Text(formatInt(livedUnits.toLong()), style = ClndrText.numLarge.copy(fontSize = 52.sp), color = palette.txtHi)
                     Text(
-                        " %",
-                        style = ClndrText.numSmall,
-                        color = palette.txtLow,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    )
-                    Spacer(Modifier.weight(1f))
-                    Text(
-                        "${formatInt(livedUnits.toLong())} lived\n${formatInt(remainingUnits.toLong())} left",
-                        style = MaterialTheme.typography.bodySmall,
+                        " $unitName lived",
+                        style = MaterialTheme.typography.bodyMedium,
                         color = palette.txtMid,
-                        textAlign = TextAlign.End,
+                        modifier = Modifier.padding(bottom = 8.dp),
                     )
                 }
-                Spacer(Modifier.height(14.dp))
-                ClndrProgressLine(fraction = (lifePct / 100.0).toFloat())
                 Spacer(Modifier.height(9.dp))
                 Text(
-                    "Age $age · ${LIFESPAN_YEARS}-year horizon",
+                    "Age $age years",
                     style = MaterialTheme.typography.bodySmall,
                     color = palette.txtLow,
                 )
@@ -184,4 +169,3 @@ private fun EmptyHint(modifier: Modifier = Modifier) {
 }
 
 private fun formatInt(n: Long): String = String.format(Locale.US, "%,d", n)
-private fun format1(n: Double): String = String.format(Locale.US, "%.1f", n)

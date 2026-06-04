@@ -7,56 +7,41 @@ import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.provideContent
-import androidx.glance.background
-import androidx.glance.layout.Column
-import androidx.glance.layout.fillMaxSize
-import androidx.glance.layout.padding
-import androidx.glance.material3.ColorProviders
-import androidx.glance.text.Text
-import com.clndr.core.datetime.Granularity
-import com.clndr.core.datetime.LifeGridCalculator
-import com.clndr.core.datetime.LifeGridSpec
-import com.clndr.core.designsystem.theme.DarkClndrColors
-import com.clndr.core.designsystem.theme.LightClndrColors
+import androidx.glance.layout.Spacer
+import androidx.glance.layout.height
+import com.clndr.feature.widgets.shared.W
+import com.clndr.feature.widgets.shared.WidgetBigNumber
+import com.clndr.feature.widgets.shared.WidgetCaption
+import com.clndr.feature.widgets.shared.WidgetCard
+import com.clndr.feature.widgets.shared.WidgetEyebrow
 import com.clndr.feature.widgets.shared.WidgetSettings
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
+import java.util.Locale
 
+/** Mirrors the Life screen card: weeks lived + age, no remaining/lifespan. */
 class LifeMatrixWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val birth = WidgetSettings.readBirthDate(context)
         val today = LocalDate.now()
-        val (current, total) = if (birth != null) {
-            val spec = LifeGridSpec(birthDate = birth, granularity = Granularity.WEEKS, today = today)
-            val c = LifeGridCalculator()
-            c.currentIndex(spec) to c.totalCells(spec)
-        } else {
-            0 to 0
-        }
-        provideContent {
-            androidx.glance.GlanceTheme(
-                colors = ColorProviders(light = LightClndrColors, dark = DarkClndrColors),
-            ) {
-                LifeMatrixGlance(current = current, total = total)
-            }
-        }
+        val weeksLived = birth?.let { ChronoUnit.DAYS.between(it, today).coerceAtLeast(0) / 7 }
+        val age = birth?.let { ChronoUnit.YEARS.between(it, today).coerceAtLeast(0) }
+        provideContent { LifeGlance(weeksLived, age) }
     }
 }
 
 @Composable
-private fun LifeMatrixGlance(current: Int, total: Int) {
-    Column(
-        modifier = GlanceModifier
-            .fillMaxSize()
-            .background(androidx.glance.GlanceTheme.colors.background)
-            .padding(12.dp),
-    ) {
-        Text(
-            if (total > 0) {
-                "Weeks lived: $current of $total"
-            } else {
-                "Set your date of birth in clndr to render the life matrix."
-            },
-        )
+private fun LifeGlance(weeksLived: Long?, age: Long?) {
+    WidgetCard {
+        WidgetEyebrow("A life in weeks")
+        Spacer(GlanceModifier.height(8.dp))
+        if (weeksLived != null && age != null) {
+            WidgetBigNumber(String.format(Locale.US, "%,d", weeksLived), suffix = "weeks lived")
+            Spacer(GlanceModifier.height(8.dp))
+            WidgetCaption("Age $age years")
+        } else {
+            WidgetCaption("Set your date of birth in clndr.")
+        }
     }
 }

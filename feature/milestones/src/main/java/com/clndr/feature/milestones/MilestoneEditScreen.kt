@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.clndr.core.designsystem.components.ClndrDatePickerDialog
+import com.clndr.core.designsystem.components.ClndrTimePickerDialog
 import com.clndr.core.designsystem.theme.clndr
 import com.clndr.feature.milestones.state.MilestoneEditEffect
 import com.clndr.feature.milestones.state.MilestoneEditViewModel
@@ -52,6 +53,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.US)
+private val TIME_FMT = DateTimeFormatter.ofPattern("h:mm a", Locale.US)
 
 @Composable
 fun MilestoneEditScreen(
@@ -63,6 +65,7 @@ fun MilestoneEditScreen(
     val palette = MaterialTheme.clndr
     val isNew = state.draft.id == 0L
     var showPicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     val calendarPermissionLauncher = rememberLauncherForActivityResult(
@@ -163,9 +166,41 @@ fun MilestoneEditScreen(
         }
 
         Spacer(Modifier.height(16.dp))
+        FieldLabel("Time")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(
+                Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(palette.surface)
+                    .border(1.dp, palette.line, RoundedCornerShape(12.dp))
+                    .clickable { showTimePicker = true }
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
+            ) {
+                Text(
+                    state.draft.targetTime?.format(TIME_FMT) ?: "All-day (9:00 AM reminder)",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (state.draft.targetTime != null) palette.txtHi else palette.txtLow,
+                )
+            }
+            if (state.draft.targetTime != null) {
+                Box(
+                    Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(1.dp, palette.line, RoundedCornerShape(12.dp))
+                        .clickable { viewModel.update { it.copy(targetTime = null) } }
+                        .padding(horizontal = 14.dp, vertical = 14.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("Clear", style = MaterialTheme.typography.labelLarge, color = palette.txtMid)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
         ToggleRow(
             title = "Set a system reminder",
-            sub = "Adds an alarm via the device",
+            sub = "Rings at the chosen time via the device",
             checked = state.draft.reminderEnabled,
             onChange = { checked ->
                 if (checked) {
@@ -227,6 +262,14 @@ fun MilestoneEditScreen(
             initialDate = state.draft.targetDate,
             onDismiss = { showPicker = false },
             onConfirm = { picked -> viewModel.update { it.copy(targetDate = picked) } },
+        )
+    }
+
+    if (showTimePicker) {
+        ClndrTimePickerDialog(
+            initialTime = state.draft.targetTime,
+            onDismiss = { showTimePicker = false },
+            onConfirm = { picked -> viewModel.update { it.copy(targetTime = picked) } },
         )
     }
 }

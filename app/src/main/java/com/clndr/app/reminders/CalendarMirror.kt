@@ -21,15 +21,14 @@ class CalendarMirror @Inject constructor(
 
     override fun upsert(milestone: Milestone): Long? {
         val resolver: ContentResolver = context.contentResolver
+        // Honor the chosen time when set; otherwise fall back to start-of-day.
+        val startMs = milestone.targetTime
+            ?.let { milestone.targetDate.atTime(it).atZone(milestone.zoneId) }
+            ?.toInstant()?.toEpochMilli()
+            ?: milestone.targetDate.atStartOfDay(milestone.zoneId).toInstant().toEpochMilli()
         val values = ContentValues().apply {
-            put(
-                CalendarContract.Events.DTSTART,
-                milestone.targetDate.atStartOfDay(milestone.zoneId).toInstant().toEpochMilli()
-            )
-            put(
-                CalendarContract.Events.DTEND,
-                milestone.targetDate.atStartOfDay(milestone.zoneId).toInstant().toEpochMilli() + ONE_HOUR_MS
-            )
+            put(CalendarContract.Events.DTSTART, startMs)
+            put(CalendarContract.Events.DTEND, startMs + ONE_HOUR_MS)
             put(CalendarContract.Events.TITLE, milestone.title)
             milestone.description?.let { put(CalendarContract.Events.DESCRIPTION, it) }
             put(CalendarContract.Events.EVENT_TIMEZONE, milestone.zoneId.id)

@@ -54,7 +54,8 @@
 
         <receiver
             android:name="com.clndr.feature.widgets.year.YearProgressWidgetReceiver"
-            android:exported="false">
+            android:exported="false"
+            android:label="@string/widget_year_progress_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -64,14 +65,39 @@
         </receiver>
 
         <receiver
+            android:name="com.clndr.feature.widgets.year.YearCalendarWidgetReceiver"
+            android:exported="false"
+            android:label="@string/widget_year_calendar_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/year_calendar_widget_info" />
+        </receiver>
+
+        <receiver
             android:name="com.clndr.feature.widgets.life.LifeMatrixWidgetReceiver"
-            android:exported="false">
+            android:exported="false"
+            android:label="@string/widget_life_matrix_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/life_matrix_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.clndr.feature.widgets.goals.GoalsWidgetReceiver"
+            android:exported="false"
+            android:label="@string/widget_goals_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/goals_widget_info" />
         </receiver>
     </application>
 

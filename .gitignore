@@ -53,10 +53,13 @@ Thumbs.db
 *.log
 hs_err_pid*
 
-# KSP / Kotlin generated code
+# KSP / Kotlin generated code (build/ & out/ already ignored above)
 .kotlin/
-build/
-out/
+
+# Native debug symbols (NDK debugSymbolLevel output lands in build/, but guard strays)
+*.so.dbg
+*.sym
+native-debug-symbols.zip
 
 # Web/Node dependencies (clndr project)
 node_modules/

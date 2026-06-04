@@ -2,7 +2,11 @@
 <resources>
     <string name="app_name">clndr</string>
     <string name="widget_year_progress_label">Year Progress</string>
-    <string name="widget_year_progress_desc">Cycles of now: era, year, month, week, day.</string>
-    <string name="widget_life_matrix_label">Life Matrix</string>
-    <string name="widget_life_matrix_desc">110 years of weeks at a glance.</string>
+    <string name="widget_year_progress_desc">This year elapsed, plus decade, month, week and day cycles.</string>
+    <string name="widget_year_calendar_label">Year Calendar</string>
+    <string name="widget_year_calendar_desc">Days elapsed of the calendar year at a glance.</string>
+    <string name="widget_life_matrix_label">Life</string>
+    <string name="widget_life_matrix_desc">Weeks lived and your age, at a glance.</string>
+    <string name="widget_goals_label">Next Goal</string>
+    <string name="widget_goals_desc">Countdown to your nearest milestone.</string>
 </resources>

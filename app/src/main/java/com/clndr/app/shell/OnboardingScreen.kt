@@ -69,8 +69,8 @@ fun OnboardingScreen(
             modifier = Modifier.padding(top = 18.dp, bottom = 12.dp),
         )
         Text(
-            "clndr renders up to 110 years as quiet squares — the ones you've lived are " +
-                "marked, the rest wait. To begin, tell it when you arrived.",
+            "clndr renders the time you've lived as quiet squares — every day, week, " +
+                "month and year, marked. To begin, tell it when you arrived.",
             style = MaterialTheme.typography.bodyMedium,
             color = palette.txtMid,
             modifier = Modifier.padding(bottom = 34.dp),

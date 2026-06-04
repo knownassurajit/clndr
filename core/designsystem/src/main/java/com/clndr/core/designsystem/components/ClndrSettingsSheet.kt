@@ -26,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.clndr.core.designsystem.theme.ClndrText
 import com.clndr.core.designsystem.theme.ThemeMode
 import com.clndr.core.designsystem.theme.clndr
 import java.time.LocalDate
@@ -104,11 +103,6 @@ fun ClndrSettingsSheet(
 
             SubHead("Home screen", Modifier.padding(top = 14.dp, bottom = 10.dp))
             GhostButton(text = "Preview & add widgets", onClick = onPinWidget)
-
-            SubHead("Life horizon", Modifier.padding(top = 18.dp, bottom = 4.dp))
-            SettingRow(title = "Lifespan model", sub = null, divider = false) {
-                Text("110 yrs", style = ClndrText.numSmall, color = palette.txtMid)
-            }
         }
     }
 

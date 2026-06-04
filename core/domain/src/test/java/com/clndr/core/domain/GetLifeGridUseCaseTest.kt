@@ -13,12 +13,13 @@ import java.time.ZoneOffset
 class GetLifeGridUseCaseTest {
 
     @Test
-    fun `snapshot exposes correct totals and current index for years`() {
+    fun `snapshot exposes lived-plus-headroom totals and current index for years`() {
         val now = Instant.parse("2026-05-31T00:00:00Z")
         val clock = Clock.fixed(now, ZoneOffset.UTC)
         val useCase = GetLifeGridUseCase(LifeGridCalculator(clock), clock)
         val snapshot = useCase(LocalDate.of(2000, 1, 1), Granularity.YEARS)
-        assertThat(snapshot.totalCells).isEqualTo(110)
+        // No fixed lifespan: horizon is age (26) + HEADROOM_YEARS (15) = 41.
+        assertThat(snapshot.totalCells).isEqualTo(26 + GetLifeGridUseCase.HEADROOM_YEARS)
         assertThat(snapshot.currentIndex).isEqualTo(26)
         assertThat(snapshot.granularity).isEqualTo(Granularity.YEARS)
     }
