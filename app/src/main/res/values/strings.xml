@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">clndr</string>
+    <string name="app_name">CLNDR</string>
     <string name="widget_year_progress_label">Year Progress</string>
     <string name="widget_year_progress_desc">This year elapsed, plus decade, month, week and day cycles.</string>
     <string name="widget_year_calendar_label">Year Calendar</string>
