@@ -1,0 +1,90 @@
+package com.clndr.feature.widgets.goals
+
+import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.glance.GlanceId
+import androidx.glance.GlanceModifier
+import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.provideContent
+import androidx.glance.layout.Spacer
+import androidx.glance.layout.height
+import androidx.glance.text.FontWeight
+import androidx.glance.text.Text
+import androidx.glance.text.TextStyle
+import com.clndr.core.domain.model.Milestone
+import com.clndr.core.domain.repository.MilestonesRepository
+import com.clndr.feature.widgets.shared.W
+import com.clndr.feature.widgets.shared.WidgetBigNumber
+import com.clndr.feature.widgets.shared.WidgetCaption
+import com.clndr.feature.widgets.shared.WidgetCard
+import com.clndr.feature.widgets.shared.WidgetEyebrow
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.flow.first
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import java.util.Locale
+import kotlin.math.abs
+
+/** Mirrors the Goals screen card: the nearest upcoming milestone and its countdown. */
+class GoalsWidget : GlanceAppWidget() {
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface GoalsEntryPoint {
+        fun milestonesRepository(): MilestonesRepository
+    }
+
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val today = LocalDate.now()
+        val next: Milestone? = runCatching {
+            val repo = EntryPointAccessors
+                .fromApplication(context.applicationContext, GoalsEntryPoint::class.java)
+                .milestonesRepository()
+            repo.observeUpcoming(today).first().firstOrNull()
+                ?: repo.observePast(today).first().lastOrNull()
+        }.getOrNull()
+        provideContent { GoalsGlance(next, today) }
+    }
+}
+
+private val DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.US)
+
+@Composable
+private fun GoalsGlance(item: Milestone?, today: LocalDate) {
+    WidgetCard {
+        if (item == null) {
+            WidgetEyebrow("Goals")
+            Spacer(GlanceModifier.height(8.dp))
+            WidgetCaption("Anchor a milestone in clndr to start counting.")
+            return@WidgetCard
+        }
+        val days = ChronoUnit.DAYS.between(today, item.targetDate)
+        val (badge, label) = when {
+            days > 0 -> "Countdown" to "days remaining"
+            days == 0L -> "Today" to "today"
+            else -> "Count-up" to "days since"
+        }
+        WidgetEyebrow(badge)
+        Spacer(GlanceModifier.height(6.dp))
+        Text(
+            item.title,
+            style = TextStyle(color = W.txtHi, fontSize = 17.sp, fontWeight = FontWeight.Bold),
+        )
+        WidgetCaption(item.targetDate.format(DATE_FMT))
+        Spacer(GlanceModifier.height(10.dp))
+        WidgetBigNumber(String.format(Locale.US, "%,d", abs(days)), suffix = label)
+    }
+}
+
+@AndroidEntryPoint
+class GoalsWidgetReceiver : GlanceAppWidgetReceiver() {
+    override val glanceAppWidget: GlanceAppWidget = GoalsWidget()
+}
