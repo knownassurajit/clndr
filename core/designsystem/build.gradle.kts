@@ -11,6 +11,7 @@ android {
     defaultConfig {
         minSdk = 26
         consumerProguardFiles("consumer-rules.pro")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
@@ -42,4 +43,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
 
     coreLibraryDesugaring(libs.android.desugarjdklibs)
+
+    androidTestImplementation(libs.androidx.test.runner)
 }
