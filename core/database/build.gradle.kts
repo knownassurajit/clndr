@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.clndr.core.database"
+    namespace = "com.knownassurajit.clndr_widget.core.database"
     compileSdk = 35
 
     defaultConfig {
@@ -47,6 +47,7 @@ dependencies {
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.room.testing)
     androidTestImplementation(libs.google.truth)
     androidTestImplementation(libs.kotlinx.coroutines.test)

@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.clndr.app"
+    namespace = "com.knownassurajit.clndr_widget.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.clndr.app"
+        applicationId = "com.knownassurajit.clndr_widget.app"
         minSdk = 26
         targetSdk = 35
 
@@ -19,7 +19,7 @@ android {
         val major = 0
         val minor = 0
         val patch = 0
-        val build = 2
+        val build = 3
 
         versionCode = major * 1_000_000 + minor * 10_000 + patch * 100 + build
         versionName = "$major.$minor.$patch.$build"
@@ -76,6 +76,7 @@ android {
 
     buildFeatures {
         compose = true
+        viewBinding = true
     }
 
     packaging {
@@ -89,6 +90,11 @@ android {
             isIncludeAndroidResources = true
         }
     }
+    dependenciesInfo {
+        includeInApk = true
+        includeInBundle = true
+    }
+    buildToolsVersion = "35.0.0"
 }
 
 dependencies {
@@ -119,6 +125,8 @@ dependencies {
 
     implementation(libs.androidx.datastore.preferences)
 
+    implementation(libs.glance.appwidget)
+
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.hilt.work)
@@ -139,6 +147,7 @@ dependencies {
     testImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.runner)
 }
 
 tasks.withType<Test> {

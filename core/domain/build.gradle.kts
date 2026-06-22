@@ -6,11 +6,12 @@ plugins {
 }
 
 android {
-    namespace = "com.clndr.core.domain"
+    namespace = "com.knownassurajit.clndr_widget.core.domain"
     compileSdk = 35
 
     defaultConfig {
         minSdk = 26
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
@@ -41,4 +42,5 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.mockk)
+    androidTestImplementation(libs.androidx.test.runner)
 }

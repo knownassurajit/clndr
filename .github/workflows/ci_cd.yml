@@ -99,29 +99,48 @@ jobs:
         id: release_info
         run: |
           VERSION_NAME=$(grep "versionName =" app/build.gradle.kts | head -n 1 | awk -F'"' '{print $2}')
+          SHORT_SHA=$(git rev-parse --short=7 HEAD)
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
-          
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            echo "RELEASE_CHANNEL=stable-final" >> $GITHUB_ENV
             echo "TAG_NAME=v$VERSION_NAME" >> $GITHUB_ENV
-            echo "RELEASE_NAME=Release v$VERSION_NAME" >> $GITHUB_ENV
+            echo "RELEASE_NAME=Stable Release v$VERSION_NAME" >> $GITHUB_ENV
             echo "PRERELEASE=false" >> $GITHUB_ENV
             echo "MAKE_LATEST=true" >> $GITHUB_ENV
+            echo "RELEASE_SUMMARY=Stable final build produced from the master branch." >> $GITHUB_ENV
           else
+            echo "RELEASE_CHANNEL=pre-release-debug" >> $GITHUB_ENV
             echo "TAG_NAME=v$VERSION_NAME-dev.${{ github.run_number }}" >> $GITHUB_ENV
-            echo "RELEASE_NAME=Pre-release v$VERSION_NAME-dev.${{ github.run_number }}" >> $GITHUB_ENV
+            echo "RELEASE_NAME=Pre-release Debug v$VERSION_NAME-dev.${{ github.run_number }}" >> $GITHUB_ENV
             echo "PRERELEASE=true" >> $GITHUB_ENV
             echo "MAKE_LATEST=false" >> $GITHUB_ENV
+            echo "RELEASE_SUMMARY=Pre-release debug build produced from the develop branch for validation and testing." >> $GITHUB_ENV
           fi
 
       - name: Generate Release Body
         run: |
-          echo "### Release Details" > release_body.md
-          echo "- **Branch:** ${{ github.ref_name }}" >> release_body.md
-          echo "- **Build Time:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> release_body.md
-          echo "- **Workflow Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> release_body.md
-          echo "" >> release_body.md
-          echo "### Changelog (Latest Commits)" >> release_body.md
-          git log --oneline -n 20 --no-merges >> release_body.md
+          cat > release_body.md <<EOF
+          ### Release Summary
+          - **Release Channel:** $RELEASE_CHANNEL
+          - **Version:** v$VERSION_NAME
+          - **Branch:** ${{ github.ref_name }}
+          - **Commit:** $SHORT_SHA
+          - **Commit Message:** $(git log -1 --pretty=format:'%s')
+          - **Build Time:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          - **Workflow Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          - **Artifacts:** Debug APK on develop, Debug APK + Release APK + AAB on master
+
+          $RELEASE_SUMMARY
+
+          ### What Changed
+          $(git log --pretty=format:'- %h %s (%an, %ad)' --date=short -n 15 --no-merges)
+
+          ### Notes
+          - Pre-release builds are intended for validation on the develop branch.
+          - Stable builds are published from the master branch for final distribution.
+          EOF
 
       - name: Decode keystore
         env:
@@ -139,7 +158,12 @@ jobs:
           CLNDR_STORE_PASSWORD: ${{ secrets.CLNDR_STORE_PASSWORD }}
           CLNDR_KEY_ALIAS: ${{ secrets.CLNDR_KEY_ALIAS }}
           CLNDR_KEY_PASSWORD: ${{ secrets.CLNDR_KEY_PASSWORD }}
-        run: ./gradlew assembleDebug assembleRelease bundleRelease --no-daemon
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            ./gradlew assembleDebug assembleRelease bundleRelease --no-daemon
+          else
+            ./gradlew assembleDebug --no-daemon
+          fi
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2

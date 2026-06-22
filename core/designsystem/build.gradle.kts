@@ -5,12 +5,13 @@ plugins {
 }
 
 android {
-    namespace = "com.clndr.core.designsystem"
+    namespace = "com.knownassurajit.clndr_widget.core.designsystem"
     compileSdk = 35
 
     defaultConfig {
         minSdk = 26
         consumerProguardFiles("consumer-rules.pro")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
@@ -42,4 +43,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
 
     coreLibraryDesugaring(libs.android.desugarjdklibs)
+
+    androidTestImplementation(libs.androidx.test.runner)
 }

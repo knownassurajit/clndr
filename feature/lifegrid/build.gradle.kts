@@ -7,11 +7,12 @@ plugins {
 }
 
 android {
-    namespace = "com.clndr.feature.lifegrid"
+    namespace = "com.knownassurajit.clndr_widget.feature.lifegrid"
     compileSdk = 35
 
     defaultConfig {
         minSdk = 26
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
@@ -60,4 +61,5 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.mockk)
+    androidTestImplementation(libs.androidx.test.runner)
 }
