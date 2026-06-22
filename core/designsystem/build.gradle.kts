@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.clndr.core.designsystem"
+    namespace = "com.knownassurajit.clndr_widget.core.designsystem"
     compileSdk = 35
 
     defaultConfig {

@@ -40,7 +40,7 @@ A running log of design choices, gotchas, and "next time, do this differently" n
 ### 2026-05-31 — Initial Android rewrite
 
 **Scope**: Replaced the React/Vite web app at the repo root with a multi-module Android
-project (`com.clndr.app`). All eight modules created: `:app`, `:core:{datetime, database,
+project (`com.knownassurajit.clndr_widget.app`). All eight modules created: `:app`, `:core:{datetime, database,
 designsystem, domain}`, `:feature:{lifegrid, milestones, widgets}`. Bootstrapped version
 catalog, Gradle wrapper 8.9, AGP 8.6.1, Kotlin 2.0.21, Hilt 2.52, Room 2.6.1, Glance 1.1.1.
 

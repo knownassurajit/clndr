@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.clndr.feature.milestones"
+    namespace = "com.knownassurajit.clndr_widget.feature.milestones"
     compileSdk = 35
 
     defaultConfig {

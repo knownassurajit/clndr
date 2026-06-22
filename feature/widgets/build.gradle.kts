@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.clndr.feature.widgets"
+    namespace = "com.knownassurajit.clndr_widget.feature.widgets"
     compileSdk = 35
 
     defaultConfig {

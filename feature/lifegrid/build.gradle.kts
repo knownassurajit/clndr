@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.clndr.feature.lifegrid"
+    namespace = "com.knownassurajit.clndr_widget.feature.lifegrid"
     compileSdk = 35
 
     defaultConfig {

@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.clndr.app"
+    namespace = "com.knownassurajit.clndr_widget.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.clndr.app"
+        applicationId = "com.knownassurajit.clndr_widget.app"
         minSdk = 26
         targetSdk = 35
 
