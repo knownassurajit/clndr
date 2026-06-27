@@ -26,12 +26,12 @@ jobs:
           java-version: '17'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/master' }}
 
       - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v3
+        uses: gradle/actions/wrapper-validation@v4
 
       - name: Detekt
         run: ./gradlew detekt --no-daemon
@@ -93,7 +93,7 @@ jobs:
           java-version: '17'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Determine Release Info
         id: release_info
