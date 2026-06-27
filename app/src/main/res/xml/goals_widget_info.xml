@@ -8,4 +8,5 @@
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
     android:description="@string/widget_goals_desc"
+    android:previewImage="@mipmap/ic_launcher"
     android:initialLayout="@layout/glance_default_loading_layout" />
