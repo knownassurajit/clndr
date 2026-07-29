@@ -49,21 +49,19 @@ fun YearProgressScreen(
     val today = LocalDate.now()
     val year = today.year
 
-    val cachedCycles = androidx.compose.runtime.remember(today) {
+    val decadeLabel = androidx.compose.runtime.remember(year) { "${(year / 10) * 10}s" }
+    val monthLabel = androidx.compose.runtime.remember(today) { today.format(MONTH_FULL) }
+    val weekLabel = androidx.compose.runtime.remember(today) {
         val weekStart = today.minusDays((today.dayOfWeek.value - 1).toLong())
-        listOf(
-            Cycle("Decade", "${(year / 10) * 10}s", 0.0),
-            Cycle("Month", today.format(MONTH_FULL), 0.0),
-            Cycle("Week", weekStart.format(MMM_D), 0.0),
-            Cycle("Day", today.format(MMM_D), 0.0),
-        )
+        weekStart.format(MMM_D)
     }
+    val dayLabel = androidx.compose.runtime.remember(today) { today.format(MMM_D) }
 
     val cycles = listOf(
-        cachedCycles[0].copy(pct = buckets.decadePct),
-        cachedCycles[1].copy(pct = buckets.monthPct),
-        cachedCycles[2].copy(pct = buckets.weekPct),
-        cachedCycles[3].copy(pct = buckets.dayPct),
+        Cycle("Decade", decadeLabel, buckets.decadePct),
+        Cycle("Month", monthLabel, buckets.monthPct),
+        Cycle("Week", weekLabel, buckets.weekPct),
+        Cycle("Day", dayLabel, buckets.dayPct),
     )
 
     Column(

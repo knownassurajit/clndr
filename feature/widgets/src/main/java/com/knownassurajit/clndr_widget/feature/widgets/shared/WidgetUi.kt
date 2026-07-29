@@ -44,6 +44,8 @@ fun WidgetCard(content: @Composable () -> Unit) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
+            .background(W.surface)
+            .cornerRadius(20.dp)
             .padding(16.dp),
     ) { content() }
 }
