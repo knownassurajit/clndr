@@ -1,17 +1,23 @@
-name: Play Console Release
+name: Play Console & GitHub Release
 
 on:
   push:
     branches:
       - master
+  workflow_dispatch:
+    inputs:
+      rollback_version:
+        description: 'Optional rollback version tag (e.g. v1.0.0)'
+        required: false
+        default: ''
 
 concurrency:
-  group: play-release-${{ github.workflow }}
+  group: play-release-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   release:
-    name: Prepare Release & Publish to Play Console
+    name: Prepare Release, Publish GitHub & Play Console
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -35,23 +41,28 @@ jobs:
       - name: Extract Version
         id: version
         run: |
-          VERSION_NAME=$(grep "versionName =" app/build.gradle.kts | head -n 1 | awk -F'"' '{print $2}')
-          VERSION_CODE=$(grep "versionCode =" app/build.gradle.kts | head -n 1 | awk '{print $3}')
+          if [ -n "${{ github.event.inputs.rollback_version }}" ]; then
+            VERSION_NAME="${{ github.event.inputs.rollback_version }}"
+            VERSION_CODE=$(date +'%Y%m%d%H')
+          else
+            VERSION_NAME=$(grep "versionName =" app/build.gradle.kts | head -n 1 | awk -F'"' '{print $2}')
+            VERSION_CODE=$(grep "versionCode =" app/build.gradle.kts | head -n 1 | awk '{print $3}')
+          fi
           SHORT_SHA=$(git rev-parse --short=7 HEAD)
           echo "versionName=$VERSION_NAME" >> $GITHUB_OUTPUT
           echo "versionCode=$VERSION_CODE" >> $GITHUB_OUTPUT
           echo "shortSha=$SHORT_SHA" >> $GITHUB_OUTPUT
 
-      - name: Create Release Branch
+      - name: Create Dedicated Release Branch
         run: |
           BRANCH_NAME="release/clndr/${{ steps.version.outputs.versionName }}"
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           if git ls-remote --exit-code --heads origin "$BRANCH_NAME"; then
-            echo "Branch $BRANCH_NAME already exists, checking it out"
+            echo "Release branch $BRANCH_NAME exists, checking out."
             git checkout "$BRANCH_NAME"
           else
-            echo "Creating new release branch $BRANCH_NAME"
+            echo "Creating dedicated release branch $BRANCH_NAME for safe rollback tracking."
             git checkout -b "$BRANCH_NAME"
             git push origin "$BRANCH_NAME"
           fi
@@ -60,15 +71,18 @@ jobs:
         env:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
         run: |
-          echo "$KEYSTORE_B64" | base64 -d > keystore.jks
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > keystore.jks
+          fi
 
-      - name: Build Android App Bundle
+      - name: Build Android Release Artifacts (APK & AAB)
         env:
           CLNDR_STORE_FILE: ${{ github.workspace }}/keystore.jks
           CLNDR_STORE_PASSWORD: ${{ secrets.CLNDR_STORE_PASSWORD }}
           CLNDR_KEY_ALIAS: ${{ secrets.CLNDR_KEY_ALIAS }}
           CLNDR_KEY_PASSWORD: ${{ secrets.CLNDR_KEY_PASSWORD }}
-        run: ./gradlew bundleRelease --no-daemon
+        run: |
+          ./gradlew assembleRelease bundleRelease --no-daemon
 
       - name: Generate Release Notes
         run: |
@@ -80,7 +94,29 @@ jobs:
           workflow=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           EOF
 
-      - name: Publish to Google Play (Internal Testing)
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.versionName }}
+          name: "CLNDR v${{ steps.version.outputs.versionName }}"
+          body: |
+            ### Release Summary
+            - **App:** CLNDR
+            - **Version:** v${{ steps.version.outputs.versionName }}
+            - **Commit:** ${{ github.sha }}
+            - **Release Branch:** `release/clndr/${{ steps.version.outputs.versionName }}`
+          draft: false
+          prerelease: false
+          files: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to Google Play (Internal Track)
+        if: env.PLAY_CONSOLE_JSON != ''
+        env:
+          PLAY_CONSOLE_JSON: ${{ secrets.PLAY_CONSOLE_JSON }}
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_CONSOLE_JSON }}
