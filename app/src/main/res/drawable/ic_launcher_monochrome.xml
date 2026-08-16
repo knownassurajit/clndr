@@ -1,24 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  clndr mark: a life rendered as a 5x5 grid of finite cells. The solid cells are time
-  already lived; the hollow cells are the unspent ahead. Artwork sits in the inner 72dp
-  safe zone of the 108dp adaptive canvas so circle / squircle / teardrop masks keep every cell.
--->
+<!-- Android 13+ themed icon: black-on-transparent; the system tints this layer. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Lived cells (filled). 5x5 grid, cell 9, gap 3, origin 26 — ends at 83, inside 18–90. -->
     <path
-        android:fillColor="#FFFFFF"
+        android:fillColor="#FF000000"
         android:pathData="M26,26h9v9h-9z M38,26h9v9h-9z M50,26h9v9h-9z M62,26h9v9h-9z M74,26h9v9h-9z M26,38h9v9h-9z M38,38h9v9h-9z M50,38h9v9h-9z M62,38h9v9h-9z M74,38h9v9h-9z M26,50h9v9h-9z M38,50h9v9h-9z" />
 
-    <!-- Unspent cells (outlined) -->
     <path
         android:fillColor="#00000000"
         android:pathData="M51,51h7v7h-7z M63,51h7v7h-7z M75,51h7v7h-7z M27,63h7v7h-7z M39,63h7v7h-7z M51,63h7v7h-7z M63,63h7v7h-7z M75,63h7v7h-7z M27,75h7v7h-7z M39,75h7v7h-7z M51,75h7v7h-7z M63,75h7v7h-7z M75,75h7v7h-7z"
         android:strokeWidth="1.5"
-        android:strokeColor="#FFFFFF" />
+        android:strokeColor="#FF000000" />
 </vector>

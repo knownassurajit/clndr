@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 24dp notification silhouette. White; NotificationCompat tints it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M4,4h3v3h-3z M8,4h3v3h-3z M12,4h3v3h-3z M16,4h3v3h-3z M4,8h3v3h-3z M8,8h3v3h-3z M12,8h3v3h-3z M16,8h3v3h-3z M4,12h3v3h-3z M8,12h3v3h-3z" />
+
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M12.5,12.5h2v2h-2z M16.5,12.5h2v2h-2z M4.5,16.5h2v2h-2z M8.5,16.5h2v2h-2z M12.5,16.5h2v2h-2z M16.5,16.5h2v2h-2z"
+        android:strokeWidth="1"
+        android:strokeColor="#FFFFFFFF" />
+</vector>
