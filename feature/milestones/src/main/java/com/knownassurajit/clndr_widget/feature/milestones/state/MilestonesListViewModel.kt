@@ -20,6 +20,7 @@ import javax.inject.Inject
 data class MilestonesListState(
     val upcoming: List<MilestoneUi> = emptyList(),
     val past: List<MilestoneUi> = emptyList(),
+    val today: LocalDate = LocalDate.EPOCH,
 )
 
 @HiltViewModel
@@ -40,6 +41,7 @@ class MilestonesListViewModel @Inject constructor(
             MilestonesListState(
                 upcoming = upcoming.map { it.toUi(today) },
                 past = past.map { it.toUi(today) },
+                today = today,
             )
         }
             .onEach { _state.value = it }

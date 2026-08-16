@@ -32,7 +32,6 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +43,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.knownassurajit.clndr_widget.core.designsystem.components.ClndrDatePickerDialog
 import com.knownassurajit.clndr_widget.core.designsystem.components.ClndrTimePickerDialog
 import com.knownassurajit.clndr_widget.core.designsystem.theme.clndr
@@ -63,6 +63,7 @@ sealed interface MilestoneEditAction {
     object ClearTime : MilestoneEditAction
     data class ReminderToggled(val checked: Boolean) : MilestoneEditAction
     data class CalendarToggled(val checked: Boolean) : MilestoneEditAction
+    data class ClockToggled(val checked: Boolean) : MilestoneEditAction
     object Delete : MilestoneEditAction
     object Save : MilestoneEditAction
 }
@@ -73,16 +74,18 @@ fun MilestoneEditScreen(
     modifier: Modifier = Modifier,
     viewModel: MilestoneEditViewModel = hiltViewModel(),
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val isNew = state.draft.id == 0L
     var showPicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     val calendarPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            if (!isGranted) {
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { grants ->
+            val ok = grants[Manifest.permission.WRITE_CALENDAR] == true &&
+                grants[Manifest.permission.READ_CALENDAR] == true
+            if (!ok) {
                 viewModel.update { it.copy(mirrorToCalendar = false) }
             }
         }
@@ -152,7 +155,7 @@ private fun handleEditAction(
     action: MilestoneEditAction,
     viewModel: MilestoneEditViewModel,
     context: android.content.Context,
-    calendarLauncher: androidx.activity.result.ActivityResultLauncher<String>,
+    calendarLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>,
     notificationLauncher: androidx.activity.result.ActivityResultLauncher<String>,
     onShowPicker: () -> Unit,
     onShowTimePicker: () -> Unit,
@@ -178,15 +181,21 @@ private fun handleEditAction(
         }
         is MilestoneEditAction.CalendarToggled -> {
             val checked = action.checked
-            val needPermission = checked &&
-                ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.WRITE_CALENDAR
-                ) != PackageManager.PERMISSION_GRANTED
+            val needPermission = checked && (
+                ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_CALENDAR)
+                    != PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR)
+                    != PackageManager.PERMISSION_GRANTED
+                )
             if (needPermission) {
-                calendarLauncher.launch(Manifest.permission.WRITE_CALENDAR)
+                calendarLauncher.launch(
+                    arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR),
+                )
             }
             viewModel.update { it.copy(mirrorToCalendar = checked) }
+        }
+        is MilestoneEditAction.ClockToggled -> {
+            viewModel.update { it.copy(mirrorToClock = action.checked) }
         }
         MilestoneEditAction.Delete -> viewModel.delete()
         MilestoneEditAction.Save -> viewModel.save()
@@ -304,9 +313,19 @@ private fun MilestoneEditContent(
         )
         ToggleRow(
             title = "Add to system calendar",
-            sub = "Mirrors this milestone as an all-day event",
+            sub = if (state.draft.targetTime != null) {
+                "Mirrors this milestone as a one-hour timed event"
+            } else {
+                "Mirrors this milestone as an all-day event"
+            },
             checked = state.draft.mirrorToCalendar,
             onChange = { checked -> onAction(MilestoneEditAction.CalendarToggled(checked)) },
+        )
+        ToggleRow(
+            title = "Add Clock alarm",
+            sub = "Opens the system Clock app with an alarm at the chosen time (9:00 AM if none)",
+            checked = state.draft.mirrorToClock,
+            onChange = { checked -> onAction(MilestoneEditAction.ClockToggled(checked)) },
         )
 
         Spacer(Modifier.height(20.dp))

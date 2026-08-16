@@ -35,4 +35,10 @@ object SettingsModule {
     fun provideCalendarManager(
         impl: com.knownassurajit.clndr_widget.app.reminders.CalendarMirror
     ): com.knownassurajit.clndr_widget.core.domain.calendar.CalendarManager = impl
+
+    @Provides
+    @Singleton
+    fun provideClockAlarmManager(
+        impl: com.knownassurajit.clndr_widget.app.reminders.ClockAlarmMirror
+    ): com.knownassurajit.clndr_widget.core.domain.clock.ClockAlarmManager = impl
 }
