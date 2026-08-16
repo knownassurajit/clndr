@@ -73,9 +73,9 @@ jobs:
           if-no-files-found: ignore
 
   release:
-    name: Create Release
+    name: Create Pre-release
     needs: build-test
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -102,44 +102,25 @@ jobs:
           SHORT_SHA=$(git rev-parse --short=7 HEAD)
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
-
-          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
-            echo "RELEASE_CHANNEL=stable-final" >> $GITHUB_ENV
-            echo "TAG_NAME=v$VERSION_NAME" >> $GITHUB_ENV
-            echo "RELEASE_NAME=Stable Release v$VERSION_NAME" >> $GITHUB_ENV
-            echo "PRERELEASE=false" >> $GITHUB_ENV
-            echo "MAKE_LATEST=true" >> $GITHUB_ENV
-            echo "RELEASE_SUMMARY=Stable final build produced from the master branch." >> $GITHUB_ENV
-          else
-            echo "RELEASE_CHANNEL=pre-release-debug" >> $GITHUB_ENV
-            echo "TAG_NAME=v$VERSION_NAME-dev.${{ github.run_number }}" >> $GITHUB_ENV
-            echo "RELEASE_NAME=Pre-release Debug v$VERSION_NAME-dev.${{ github.run_number }}" >> $GITHUB_ENV
-            echo "PRERELEASE=true" >> $GITHUB_ENV
-            echo "MAKE_LATEST=false" >> $GITHUB_ENV
-            echo "RELEASE_SUMMARY=Pre-release debug build produced from the develop branch for validation and testing." >> $GITHUB_ENV
-          fi
+          echo "TAG_NAME=v$VERSION_NAME-dev.${{ github.run_number }}" >> $GITHUB_ENV
+          echo "RELEASE_NAME=Pre-release Debug v$VERSION_NAME-dev.${{ github.run_number }}" >> $GITHUB_ENV
 
       - name: Generate Release Body
         run: |
           cat > release_body.md <<EOF
           ### Release Summary
-          - **Release Channel:** $RELEASE_CHANNEL
+          - **Release Channel:** pre-release-debug
           - **Version:** v$VERSION_NAME
           - **Branch:** ${{ github.ref_name }}
           - **Commit:** $SHORT_SHA
           - **Commit Message:** $(git log -1 --pretty=format:'%s')
           - **Build Time:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')
-          - **Workflow Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          - **Artifacts:** Debug APK on develop, Debug APK + Release APK + AAB on master
+          - **Workflow Run:** [#${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-          $RELEASE_SUMMARY
+          Pre-release debug build from develop for validation and testing.
 
           ### What Changed
           $(git log --pretty=format:'- %h %s (%an, %ad)' --date=short -n 15 --no-merges)
-
-          ### Notes
-          - Pre-release builds are intended for validation on the develop branch.
-          - Stable builds are published from the master branch for final distribution.
           EOF
 
       - name: Decode keystore
@@ -147,36 +128,29 @@ jobs:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
         run: |
           if [ -z "$KEYSTORE_B64" ]; then
-            echo "::warning::No KEYSTORE_B64 secret — release bundle will be unsigned."
+            echo "::warning::No KEYSTORE_B64 secret — debug APK will be unsigned."
             exit 0
           fi
           echo "$KEYSTORE_B64" | base64 -d > keystore.jks
 
-      - name: Build Android Artifacts
+      - name: Build debug APK
         env:
           CLNDR_STORE_FILE: ${{ github.workspace }}/keystore.jks
           CLNDR_STORE_PASSWORD: ${{ secrets.CLNDR_STORE_PASSWORD }}
           CLNDR_KEY_ALIAS: ${{ secrets.CLNDR_KEY_ALIAS }}
           CLNDR_KEY_PASSWORD: ${{ secrets.CLNDR_KEY_PASSWORD }}
-        run: |
-          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
-            ./gradlew assembleDebug assembleRelease bundleRelease --no-daemon
-          else
-            ./gradlew assembleDebug --no-daemon
-          fi
+        run: ./gradlew assembleDebug --no-daemon
 
-      - name: Publish GitHub Release
+      - name: Publish GitHub Pre-release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG_NAME }}
           name: ${{ env.RELEASE_NAME }}
           body_path: release_body.md
           draft: false
-          prerelease: ${{ env.PRERELEASE == 'true' }}
-          make_latest: ${{ env.MAKE_LATEST }}
+          prerelease: true
+          make_latest: false
           files: |
             app/build/outputs/apk/debug/*.apk
-            app/build/outputs/apk/release/*.apk
-            app/build/outputs/bundle/release/*.aab
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

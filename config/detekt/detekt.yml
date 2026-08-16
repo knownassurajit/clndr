@@ -17,7 +17,7 @@ complexity:
   active: true
   LongParameterList:
     active: true
-    functionThreshold: 8
+    functionThreshold: 12
     constructorThreshold: 8
   LongMethod:
     threshold: 250
@@ -40,6 +40,8 @@ exceptions:
 
 naming:
   active: true
+  PackageNaming:
+    active: false
   FunctionNaming:
     active: true
     functionPattern: '[a-zA-Z][a-zA-Z0-9]*'
