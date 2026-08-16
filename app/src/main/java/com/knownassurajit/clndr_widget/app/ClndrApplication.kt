@@ -15,6 +15,7 @@ class ClndrApplication : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         NotificationChannels.ensureCreated(this)
+        com.knownassurajit.clndr_widget.app.widget.WidgetRefreshWorker.ensureScheduled(this)
     }
 
     override val workManagerConfiguration: Configuration

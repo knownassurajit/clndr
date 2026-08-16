@@ -13,7 +13,9 @@ data class MilestoneDraft(
     val targetTime: LocalTime? = null,
     val reminderEnabled: Boolean = false,
     val reminderLeadMinutes: Int = 0,
+    val calendarEventId: Long? = null,
     val mirrorToCalendar: Boolean = false,
+    val mirrorToClock: Boolean = false,
 ) {
     fun toMilestone(zone: ZoneId = ZoneId.systemDefault()): Milestone = Milestone(
         id = id,
@@ -24,7 +26,7 @@ data class MilestoneDraft(
         zoneId = zone,
         reminderEnabled = reminderEnabled,
         reminderLeadMinutes = reminderLeadMinutes,
-        calendarEventId = null,
+        calendarEventId = calendarEventId,
         color = null,
     )
 
@@ -44,5 +46,7 @@ fun Milestone.toDraft(): MilestoneDraft = MilestoneDraft(
     targetTime = targetTime,
     reminderEnabled = reminderEnabled,
     reminderLeadMinutes = reminderLeadMinutes,
+    calendarEventId = calendarEventId,
     mirrorToCalendar = calendarEventId != null,
+    mirrorToClock = false,
 )

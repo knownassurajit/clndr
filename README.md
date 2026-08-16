@@ -47,13 +47,13 @@ JDK 17 (Temurin) is required.
    re-scheduling via `WorkManager`, optional `CalendarContract` mirror.
 5. **Strict monochrome theme** with optional sunrise/sunset auto-switch (NOAA simplified
    formula — no location permission required).
-6. **Glance widgets** — Year Progress and Life Matrix, with in-app pin via
-   `AppWidgetManager.requestPinAppWidget`.
+6. **Glance widgets** — Year Progress, Year Calendar, Life Matrix, and Goals. Compact / medium / expanded layouts, in-app Light/Dark (or system) theming, 15-minute refresh, and pin from Settings.
 
 ## CI/CD
 
-`.github/workflows/ci_cd.yml` runs detekt + Android Lint + unit tests + `assembleDebug`
-on every push and PR; tags starting with `v` build a signed AAB.
+`.github/workflows/ci_cd.yml` runs detekt, Android Lint, unit tests, and `assembleDebug` on every push and pull request. Pushes to **`develop`** also publish a GitHub pre-release with a debug APK.
+
+Pushes to **`master`** run `.github/workflows/play-release.yml`: tests, signed APK + AAB, a stable GitHub release (`v$versionName`), and (when `PLAY_CONSOLE_JSON` is set) upload to the Play Console **internal** track. A `release/clndr/$versionName` branch is pointed at the built SHA for rollback tracking.
 
 ## Documentation
 

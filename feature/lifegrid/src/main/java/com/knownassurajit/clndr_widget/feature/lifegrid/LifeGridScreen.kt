@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.knownassurajit.clndr_widget.core.datetime.Granularity
 import com.knownassurajit.clndr_widget.core.designsystem.components.ClndrCard
 import com.knownassurajit.clndr_widget.core.designsystem.components.Eyebrow
@@ -47,7 +47,7 @@ fun LifeGridScreen(
     viewModel: LifeGridViewModel = hiltViewModel(),
 ) {
     viewModel.bindBirthDate(birthDate)
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val palette = MaterialTheme.clndr
 
     if (birthDate == null) {
@@ -55,7 +55,7 @@ fun LifeGridScreen(
         return
     }
 
-    val today = LocalDate.now()
+    val today = state.today.takeUnless { it == LocalDate.EPOCH } ?: birthDate
     val age = ChronoUnit.YEARS.between(birthDate, today).coerceAtLeast(0)
 
     // Only ever count time *lived* — no fixed lifespan, no "remaining".

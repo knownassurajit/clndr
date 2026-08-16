@@ -10,8 +10,11 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.knownassurajit.clndr_widget.core.designsystem.theme.ThemeMode
+import com.knownassurajit.clndr_widget.feature.widgets.shared.WidgetSettings
+import com.knownassurajit.clndr_widget.feature.widgets.shared.WidgetUpdater
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import javax.inject.Inject
@@ -41,50 +44,58 @@ class SettingsRepository @Inject constructor(
         prefs[KEY_SUNRISE_LAT] ?: DEFAULT_LATITUDE
     }
 
+    val widgetsFollowAppTheme: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[KEY_WIDGET_FOLLOW_APP] ?: true
+    }
+
     suspend fun setBirthDate(date: LocalDate?) {
-        println("CLNDR_TEST: setBirthDate called with date=$date")
         context.dataStore.edit { prefs ->
-            println("CLNDR_TEST: datastore edit block starting, current val = ${prefs[KEY_BIRTH_EPOCH_DAY]}")
             if (date == null) {
                 prefs.remove(KEY_BIRTH_EPOCH_DAY)
             } else {
                 prefs[KEY_BIRTH_EPOCH_DAY] = date.toEpochDay()
             }
-            println("CLNDR_TEST: datastore edit block finished, new val = ${prefs[KEY_BIRTH_EPOCH_DAY]}")
         }
-        println("CLNDR_TEST: datastore edit completed")
-        runCatching {
-            val sharedPrefs = context.getSharedPreferences("clndr_settings", Context.MODE_PRIVATE)
-            sharedPrefs.edit().apply {
-                if (date == null) {
-                    remove("birth_epoch_day")
-                } else {
-                    putLong("birth_epoch_day", date.toEpochDay())
-                }
-                apply()
-            }
-        }
-        runCatching {
-            com.knownassurajit.clndr_widget.feature.widgets.shared.WidgetUpdater.updateAll(context)
-        }
+        mirrorSidecarAndRefresh()
     }
 
     suspend fun setThemeMode(mode: ThemeMode) {
         context.dataStore.edit { prefs -> prefs[KEY_THEME_MODE] = mode.name }
-        runCatching {
-            com.knownassurajit.clndr_widget.feature.widgets.shared.WidgetUpdater.updateAll(context)
-        }
+        mirrorSidecarAndRefresh()
     }
 
     suspend fun setSunriseAuto(enabled: Boolean) {
         context.dataStore.edit { prefs -> prefs[KEY_SUNRISE_AUTO] = enabled }
-        runCatching {
-            com.knownassurajit.clndr_widget.feature.widgets.shared.WidgetUpdater.updateAll(context)
-        }
+        mirrorSidecarAndRefresh()
     }
 
     suspend fun setSunriseLatitude(lat: Double) {
         context.dataStore.edit { prefs -> prefs[KEY_SUNRISE_LAT] = lat }
+        mirrorSidecarAndRefresh()
+    }
+
+    suspend fun setWidgetsFollowAppTheme(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[KEY_WIDGET_FOLLOW_APP] = enabled }
+        mirrorSidecarAndRefresh()
+    }
+
+    suspend fun mirrorSidecarAndRefresh() {
+        val birth = birthDate.first()
+        val theme = themeMode.first()
+        val sun = sunriseAutoEnabled.first()
+        val lat = sunriseLatitude.first()
+        val follow = widgetsFollowAppTheme.first()
+        runCatching {
+            context.getSharedPreferences(WidgetSettings.PREFS, Context.MODE_PRIVATE).edit().apply {
+                if (birth == null) remove(WidgetSettings.KEY_BIRTH) else putLong(WidgetSettings.KEY_BIRTH, birth.toEpochDay())
+                putString(WidgetSettings.KEY_THEME_MODE, theme.name)
+                putBoolean(WidgetSettings.KEY_SUNRISE_AUTO, sun)
+                putLong(WidgetSettings.KEY_SUNRISE_LAT, java.lang.Double.doubleToRawLongBits(lat))
+                putBoolean(WidgetSettings.KEY_WIDGET_FOLLOW_APP, follow)
+                apply()
+            }
+        }
+        runCatching { WidgetUpdater.updateAll(context) }
     }
 
     companion object {
@@ -92,6 +103,7 @@ class SettingsRepository @Inject constructor(
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         private val KEY_SUNRISE_AUTO = booleanPreferencesKey("sunrise_auto")
         private val KEY_SUNRISE_LAT = doublePreferencesKey("sunrise_lat")
+        private val KEY_WIDGET_FOLLOW_APP = booleanPreferencesKey("widget_follow_app")
         private const val DEFAULT_LATITUDE = 30.0
     }
 }

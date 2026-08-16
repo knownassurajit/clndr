@@ -22,12 +22,18 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: write
+    env:
+      PLAY_CONSOLE_JSON: ${{ secrets.PLAY_CONSOLE_JSON }}
 
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Checkout rollback tag
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.rollback_version != ''
+        run: git checkout "${{ github.event.inputs.rollback_version }}"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -38,11 +44,18 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v3
+
+      - name: Detekt, lint, unit tests
+        run: ./gradlew detekt lintDebug testDebugUnitTest :core:datetime:test --no-daemon
+
       - name: Extract Version
         id: version
         run: |
           if [ -n "${{ github.event.inputs.rollback_version }}" ]; then
             VERSION_NAME="${{ github.event.inputs.rollback_version }}"
+            VERSION_NAME="${VERSION_NAME#v}"
             VERSION_CODE=$(date +'%Y%m%d%H')
           else
             VERSION_NAME=$(grep "versionName =" app/build.gradle.kts | head -n 1 | awk -F'"' '{print $2}')
@@ -52,20 +65,6 @@ jobs:
           echo "versionName=$VERSION_NAME" >> $GITHUB_OUTPUT
           echo "versionCode=$VERSION_CODE" >> $GITHUB_OUTPUT
           echo "shortSha=$SHORT_SHA" >> $GITHUB_OUTPUT
-
-      - name: Create Dedicated Release Branch
-        run: |
-          BRANCH_NAME="release/clndr/${{ steps.version.outputs.versionName }}"
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-          if git ls-remote --exit-code --heads origin "$BRANCH_NAME"; then
-            echo "Release branch $BRANCH_NAME exists, checking out."
-            git checkout "$BRANCH_NAME"
-          else
-            echo "Creating dedicated release branch $BRANCH_NAME for safe rollback tracking."
-            git checkout -b "$BRANCH_NAME"
-            git push origin "$BRANCH_NAME"
-          fi
 
       - name: Decode keystore
         env:
@@ -81,8 +80,15 @@ jobs:
           CLNDR_STORE_PASSWORD: ${{ secrets.CLNDR_STORE_PASSWORD }}
           CLNDR_KEY_ALIAS: ${{ secrets.CLNDR_KEY_ALIAS }}
           CLNDR_KEY_PASSWORD: ${{ secrets.CLNDR_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease bundleRelease --no-daemon
+
+      - name: Point rollback branch at this SHA
         run: |
-          ./gradlew assembleRelease bundleRelease --no-daemon
+          BRANCH_NAME="release/clndr/${{ steps.version.outputs.versionName }}"
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git branch -f "$BRANCH_NAME" HEAD
+          git push origin "$BRANCH_NAME" || git push origin "HEAD:refs/heads/$BRANCH_NAME"
 
       - name: Generate Release Notes
         run: |
@@ -103,7 +109,7 @@ jobs:
             ### Release Summary
             - **App:** CLNDR
             - **Version:** v${{ steps.version.outputs.versionName }}
-            - **Commit:** ${{ github.sha }}
+            - **Commit:** ${{ steps.version.outputs.shortSha }}
             - **Release Branch:** `release/clndr/${{ steps.version.outputs.versionName }}`
           draft: false
           prerelease: false
@@ -115,8 +121,6 @@ jobs:
 
       - name: Publish to Google Play (Internal Track)
         if: env.PLAY_CONSOLE_JSON != ''
-        env:
-          PLAY_CONSOLE_JSON: ${{ secrets.PLAY_CONSOLE_JSON }}
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_CONSOLE_JSON }}

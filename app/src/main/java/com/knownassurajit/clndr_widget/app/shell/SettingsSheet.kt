@@ -1,12 +1,13 @@
 package com.knownassurajit.clndr_widget.app.shell
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.knownassurajit.clndr_widget.app.settings.SettingsRepository
+import com.knownassurajit.clndr_widget.core.designsystem.components.ClndrPinTarget
 import com.knownassurajit.clndr_widget.core.designsystem.components.ClndrSettingsSheet
 import com.knownassurajit.clndr_widget.core.designsystem.components.ClndrSettingsState
 import com.knownassurajit.clndr_widget.core.designsystem.theme.ThemeMode
@@ -27,22 +28,36 @@ class SettingsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
-        ClndrSettingsState(birthDate = null, themeMode = ThemeMode.FOLLOW_SYSTEM, sunriseAutoEnabled = false),
+        ClndrSettingsState(
+            birthDate = null,
+            themeMode = ThemeMode.FOLLOW_SYSTEM,
+            sunriseAutoEnabled = false,
+            widgetsFollowAppTheme = true,
+        ),
     )
     val state: StateFlow<ClndrSettingsState> = _state.asStateFlow()
 
-    /** True once persisted settings have been read at least once — gates the onboarding flash. */
     private val _ready = MutableStateFlow(false)
     val ready: StateFlow<Boolean> = _ready.asStateFlow()
 
     init {
-        combine(repo.birthDate, repo.themeMode, repo.sunriseAutoEnabled) { birth, theme, sun ->
-            println("CLNDR_TEST: SettingsViewModel combine emit: birth=$birth, theme=$theme, sun=$sun")
-            ClndrSettingsState(birthDate = birth, themeMode = theme, sunriseAutoEnabled = sun)
+        combine(
+            repo.birthDate,
+            repo.themeMode,
+            repo.sunriseAutoEnabled,
+            repo.widgetsFollowAppTheme,
+        ) { birth, theme, sun, follow ->
+            ClndrSettingsState(
+                birthDate = birth,
+                themeMode = theme,
+                sunriseAutoEnabled = sun,
+                widgetsFollowAppTheme = follow,
+            )
         }.onEach {
             _state.value = it
             _ready.value = true
         }.launchIn(viewModelScope)
+        viewModelScope.launch { repo.mirrorSidecarAndRefresh() }
     }
 
     fun setBirthDate(date: LocalDate?) {
@@ -56,21 +71,26 @@ class SettingsViewModel @Inject constructor(
     fun setSunriseAuto(enabled: Boolean) {
         viewModelScope.launch { repo.setSunriseAuto(enabled) }
     }
+
+    fun setWidgetsFollowAppTheme(enabled: Boolean) {
+        viewModelScope.launch { repo.setWidgetsFollowAppTheme(enabled) }
+    }
 }
 
 @Composable
 fun SettingsSheet(
     onDismiss: () -> Unit,
-    onPinWidget: () -> Unit,
+    onPinWidget: (ClndrPinTarget) -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     ClndrSettingsSheet(
         state = state,
         onDismiss = onDismiss,
         onSetBirthDate = { date -> viewModel.setBirthDate(date) },
         onSetThemeMode = viewModel::setThemeMode,
         onToggleSunriseAuto = viewModel::setSunriseAuto,
+        onToggleWidgetsFollowApp = viewModel::setWidgetsFollowAppTheme,
         onPinWidget = onPinWidget,
     )
 }

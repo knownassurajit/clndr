@@ -13,6 +13,7 @@ data class LifeGridSnapshot(
     val totalCells: Int,
     val currentIndex: Int,
     val granularity: Granularity,
+    val today: LocalDate,
 )
 
 class GetLifeGridUseCase @Inject constructor(
@@ -37,6 +38,7 @@ class GetLifeGridUseCase @Inject constructor(
             totalCells = calculator.totalCells(spec),
             currentIndex = calculator.currentIndex(spec),
             granularity = granularity,
+            today = today,
         )
     }
 

@@ -12,7 +12,8 @@ A running log of design choices, gotchas, and "next time, do this differently" n
 - **Strict monochrome.** Non-grayscale `Color(...)` literals in `:feature:*` modules are a
   detekt violation (see `config/detekt/detekt.yml`).
 - **Glance widgets do not import `MaterialTheme`.** They use `WidgetTheme.colors(context)`
-  which maps the M3 `ColorScheme` to Glance `ColorProviders`.
+  which maps the M3 palettes to Glance `ColorProvider`s, honoring in-app Light/Dark when
+  "Widgets follow app theme" is on.
 - **Hilt-Glance boundary.** Hilt injects only into `GlanceAppWidgetReceiver`; the
   `GlanceAppWidget` instance is constructed by hand and receives dependencies via its
   constructor or top-level Glance state.
@@ -34,6 +35,10 @@ A running log of design choices, gotchas, and "next time, do this differently" n
   `Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM`.
 - `requestPinAppWidget` is launcher-dependent. Always gate on
   `AppWidgetManager.isRequestPinAppWidgetSupported` and provide a toast fallback.
+- Do **not** commit `gradle/gradle-daemon-jvm.properties` with a vendor pin. Microsoft 21
+  works locally here; GitHub Actions installs Temurin 17. The file made every CI run fail
+  with `Cannot find a Java installation … vendor matching('microsoft')`. Let the wrapper
+  use `JAVA_HOME`; modules still compile with `jvmToolchain(17)`.
 
 ## 2. Cycle log
 
@@ -80,9 +85,27 @@ SettingsRepository.themeMode ─────────────────
   JetBrains Mono downloadable fonts.
 - Surface exact-alarm permission denial via `MilestoneEditEffect.RequestExactAlarmPermission`
   in MainActivity.
-- Mirror DataStore birthday into a sidecar `SharedPreferences` so Glance widgets can read
-  it without depending on `:app`.
+- Mirror DataStore birthday **and** theme into a sidecar `SharedPreferences` so Glance widgets can read
+  them without depending on `:app`.
 - Add Room schema export `1.json` once Room runs locally.
+
+### 2026-08-16 — Icons, widgets, system tools, CI
+
+**Scope**: Adaptive/round/monochrome launcher icons + density PNGs; Glance `SizeMode.Responsive` layouts and in-app widget theme; calendar upsert + Clock `ACTION_SET_ALARM`; nav/theme/performance polish; CI daemon JVM 17; `ci_cd.yml` pre-releases only from develop; `play-release.yml` is the sole stable GitHub + Play publisher.
+
+**Deviations**
+- Widget expanded year calendar is a 12-month strip, not a 372-cell day matrix (Glance box count).
+- Clock alarms are fire-and-forget into the system Clock app (no alarm id to persist).
+
+**Gotchas**
+- Play step `if: env.PLAY_CONSOLE_JSON != ''` is false unless the secret is copied onto **job-level** `env`.
+- `CalendarMirror` must query a writable calendar; hardcoded id `1` fails on most devices.
+- Gradle daemon JVM criteria are independent of `jvmToolchain(17)` — mismatch reds all CI.
+
+**Follow-ups**
+- Dogfood 15-minute widget `PeriodicWorkRequest` vs battery.
+- Play Console justification for `USE_EXACT_ALARM`.
+- Optional multi-process DataStore instead of the SharedPreferences sidecar.
 
 ## 3. Update rule
 
@@ -96,12 +119,8 @@ entry summarising:
 
 ## 4. Decisions deferred
 
-- **Widget update cadence.** Glance widgets currently re-compose only on broadcast. If
-  battery is fine, a 15-minute `PeriodicWorkRequest` may give livelier widgets. Decide
-  after first dogfooding pass.
 - **`USE_EXACT_ALARM` Play console categorisation.** The manifest declares it for
   reminder/calendar use, but Play may require justification at publish time. Re-evaluate
   before the first store upload.
-- **DataStore ↔ Glance bridge.** WidgetSettings reads SharedPreferences as a placeholder;
-  decide whether to migrate to a multi-process DataStore or push state via Glance state
-  store.
+- **DataStore ↔ Glance bridge.** WidgetSettings still reads a SharedPreferences sidecar;
+  a multi-process DataStore remains optional.
