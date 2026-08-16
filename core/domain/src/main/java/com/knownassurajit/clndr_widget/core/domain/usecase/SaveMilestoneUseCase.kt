@@ -1,6 +1,7 @@
 package com.knownassurajit.clndr_widget.core.domain.usecase
 
 import com.knownassurajit.clndr_widget.core.domain.calendar.CalendarManager
+import com.knownassurajit.clndr_widget.core.domain.clock.ClockAlarmManager
 import com.knownassurajit.clndr_widget.core.domain.model.Milestone
 import com.knownassurajit.clndr_widget.core.domain.repository.MilestonesRepository
 import com.knownassurajit.clndr_widget.core.domain.scheduler.MilestoneScheduler
@@ -10,8 +11,13 @@ class SaveMilestoneUseCase @Inject constructor(
     private val repository: MilestonesRepository,
     private val scheduler: MilestoneScheduler,
     private val calendarManager: CalendarManager,
+    private val clockAlarmManager: ClockAlarmManager,
 ) {
-    suspend operator fun invoke(milestone: Milestone, mirrorToCalendar: Boolean): Long {
+    suspend operator fun invoke(
+        milestone: Milestone,
+        mirrorToCalendar: Boolean,
+        mirrorToClock: Boolean = false,
+    ): Long {
         var updatedMilestone = milestone
         if (mirrorToCalendar) {
             val eventId = calendarManager.upsert(milestone)
@@ -28,6 +34,9 @@ class SaveMilestoneUseCase @Inject constructor(
         val id = repository.upsert(updatedMilestone)
         val savedMilestone = updatedMilestone.copy(id = id)
         scheduler.schedule(savedMilestone)
+        if (mirrorToClock) {
+            clockAlarmManager.setAlarm(savedMilestone)
+        }
         return id
     }
 }

@@ -37,7 +37,7 @@ class MilestoneReminderReceiver : BroadcastReceiver() {
                     PendingIntent.FLAG_IMMUTABLE,
                 )
                 val notification = NotificationCompat.Builder(context, NotificationChannels.MILESTONES)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setSmallIcon(R.drawable.ic_stat_clndr)
                     .setContentTitle(milestone.title)
                     .setContentText(milestone.description ?: milestone.targetDate.toString())
                     .setContentIntent(tap)

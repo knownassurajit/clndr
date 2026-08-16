@@ -27,11 +27,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.knownassurajit.clndr_widget.core.designsystem.components.ClndrCard
 import com.knownassurajit.clndr_widget.core.designsystem.components.ClndrProgressLine
 import com.knownassurajit.clndr_widget.core.designsystem.components.Eyebrow
 import com.knownassurajit.clndr_widget.core.designsystem.theme.ClndrText
 import com.knownassurajit.clndr_widget.core.designsystem.theme.clndr
+import com.knownassurajit.clndr_widget.feature.lifegrid.state.YearCalendarViewModel
 import java.time.LocalDate
 import java.time.Year
 import java.time.YearMonth
@@ -44,9 +46,10 @@ private enum class DayState { PAST, TODAY, FUTURE, EMPTY }
 
 @Composable
 fun YearCalendarScreen(
-    today: LocalDate = LocalDate.now(),
     modifier: Modifier = Modifier,
+    viewModel: YearCalendarViewModel = hiltViewModel(),
 ) {
+    val today = viewModel.today
     val palette = MaterialTheme.clndr
     val year = today.year
     val leap = Year.isLeap(year.toLong())

@@ -64,6 +64,7 @@ class LifeGridViewModel @Inject constructor(
                     packedStates = snapshot.packedStates,
                     totalCells = snapshot.totalCells,
                     currentIndex = snapshot.currentIndex,
+                    today = snapshot.today,
                     isLoading = false,
                 )
             }

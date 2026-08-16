@@ -16,7 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.knownassurajit.clndr_widget.core.designsystem.components.ClndrCard
 import com.knownassurajit.clndr_widget.core.designsystem.components.ClndrProgressLine
 import com.knownassurajit.clndr_widget.core.designsystem.components.Eyebrow
@@ -40,21 +41,30 @@ private val MONTH_FULL = DateTimeFormatter.ofPattern("MMMM", Locale.US)
 
 @Composable
 fun YearProgressScreen(
+    birthDate: LocalDate? = null,
     modifier: Modifier = Modifier,
     viewModel: YearProgressViewModel = hiltViewModel(),
 ) {
-    val buckets by viewModel.buckets.collectAsState()
+    LaunchedEffect(birthDate) { viewModel.bindBirthDate(birthDate) }
+    val buckets by viewModel.buckets.collectAsStateWithLifecycle()
     val palette = MaterialTheme.clndr
 
-    val today = LocalDate.now()
+    val today = buckets.today.takeUnless { it == LocalDate.EPOCH } ?: return
     val year = today.year
-    val weekStart = today.minusDays((today.dayOfWeek.value - 1).toLong())
+
+    val decadeLabel = androidx.compose.runtime.remember(year) { "${(year / 10) * 10}s" }
+    val monthLabel = androidx.compose.runtime.remember(today) { today.format(MONTH_FULL) }
+    val weekLabel = androidx.compose.runtime.remember(today) {
+        val weekStart = today.minusDays((today.dayOfWeek.value - 1).toLong())
+        weekStart.format(MMM_D)
+    }
+    val dayLabel = androidx.compose.runtime.remember(today) { today.format(MMM_D) }
 
     val cycles = listOf(
-        Cycle("Decade", "${(year / 10) * 10}s", buckets.decadePct),
-        Cycle("Month", today.format(MONTH_FULL), buckets.monthPct),
-        Cycle("Week", weekStart.format(MMM_D), buckets.weekPct),
-        Cycle("Day", today.format(MMM_D), buckets.dayPct),
+        Cycle("Decade", decadeLabel, buckets.decadePct),
+        Cycle("Month", monthLabel, buckets.monthPct),
+        Cycle("Week", weekLabel, buckets.weekPct),
+        Cycle("Day", dayLabel, buckets.dayPct),
     )
 
     Column(
@@ -81,8 +91,9 @@ fun YearProgressScreen(
         }
 
         Spacer(Modifier.height(18.dp))
+        val dateLabel = androidx.compose.runtime.remember(today) { today.format(MMM_D_Y) }
         Text(
-            "Updating live · ${today.format(MMM_D_Y)}",
+            "Updating live · ${dateLabel}",
             style = MaterialTheme.typography.labelSmall,
             color = palette.txtFaint,
             textAlign = TextAlign.Center,

@@ -22,6 +22,7 @@ data class ProgressBuckets(
     val monthPct: Double,
     val weekPct: Double,
     val dayPct: Double,
+    val today: LocalDate = LocalDate.EPOCH,
 ) {
     val eraRemaining: Double get() = 1.0 - eraPct
     val decadeRemaining: Double get() = 1.0 - decadePct
@@ -31,7 +32,7 @@ data class ProgressBuckets(
     val dayRemaining: Double get() = 1.0 - dayPct
 
     companion object {
-        val EMPTY = ProgressBuckets(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        val EMPTY = ProgressBuckets(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, LocalDate.EPOCH)
     }
 }
 
@@ -46,6 +47,7 @@ class ProgressEngine(
         birthDate: LocalDate?,
     ): ProgressBuckets {
         val zdt = ZonedDateTime.ofInstant(now, zone)
+        val today = zdt.toLocalDate()
         return ProgressBuckets(
             eraPct = eraPct(zdt, birthDate),
             decadePct = decadePct(zdt, birthDate),
@@ -53,6 +55,7 @@ class ProgressEngine(
             monthPct = monthPct(zdt),
             weekPct = weekPct(zdt),
             dayPct = dayPct(zdt),
+            today = today,
         )
     }
 

@@ -23,7 +23,6 @@ fun ClndrDatePickerDialog(
     onConfirm: (LocalDate) -> Unit,
     yearRange: IntRange = 1900..(LocalDate.now().year + 100),
 ) {
-    println("CLNDR_TEST: isRunningUnitTest() = ${isRunningUnitTest()}")
     if (isRunningUnitTest()) {
         // Render a simple inline text button in tests to avoid Robolectric layout issues
         TextButton(onClick = {

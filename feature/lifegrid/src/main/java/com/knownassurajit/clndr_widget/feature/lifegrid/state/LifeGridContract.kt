@@ -9,6 +9,7 @@ data class LifeGridState(
     val packedStates: IntArray = IntArray(0),
     val currentIndex: Int = -1,
     val totalCells: Int = 0,
+    val today: LocalDate = LocalDate.EPOCH,
     val isLoading: Boolean = true,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -20,6 +21,7 @@ data class LifeGridState(
         if (!packedStates.contentEquals(other.packedStates)) return false
         if (currentIndex != other.currentIndex) return false
         if (totalCells != other.totalCells) return false
+        if (today != other.today) return false
         if (isLoading != other.isLoading) return false
         return true
     }
@@ -30,6 +32,7 @@ data class LifeGridState(
         result = 31 * result + packedStates.contentHashCode()
         result = 31 * result + currentIndex
         result = 31 * result + totalCells
+        result = 31 * result + today.hashCode()
         result = 31 * result + isLoading.hashCode()
         return result
     }

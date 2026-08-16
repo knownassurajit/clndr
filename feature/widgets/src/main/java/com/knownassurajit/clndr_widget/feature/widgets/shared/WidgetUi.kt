@@ -1,12 +1,16 @@
 package com.knownassurajit.clndr_widget.feature.widgets.shared
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.glance.color.ColorProvider
 import androidx.glance.GlanceModifier
+import androidx.glance.LocalSize
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.LinearProgressIndicator
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.layout.Alignment
@@ -20,52 +24,68 @@ import androidx.glance.layout.padding
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import com.knownassurajit.clndr_widget.core.designsystem.theme.DarkPalette
-import com.knownassurajit.clndr_widget.core.designsystem.theme.LightPalette
 
-/**
- * Glance can't share Compose UI directly, so this is the widget-side mirror of the
- * design system: the same monochrome [com.knownassurajit.clndr_widget.core.designsystem.theme.ClndrPalette]
- * tokens, the same card / eyebrow / progress-line primitives the in-app screens use.
- */
-object W {
-    private fun cp(light: Color, dark: Color) = ColorProvider(day = light, night = dark)
-    val txtHi = cp(LightPalette.txtHi, DarkPalette.txtHi)
-    val txtMid = cp(LightPalette.txtMid, DarkPalette.txtMid)
-    val txtLow = cp(LightPalette.txtLow, DarkPalette.txtLow)
-    val surface = cp(LightPalette.surface, DarkPalette.surface)
-    val nodeLived = cp(LightPalette.nodeLived, DarkPalette.nodeLived)
-    val nodeFuture = cp(LightPalette.nodeFuture, DarkPalette.nodeFuture)
+enum class WidgetBucket { Compact, Medium, Expanded }
+
+@Composable
+fun currentWidgetBucket(): WidgetBucket {
+    val size = LocalSize.current
+    return when {
+        size.height < 140.dp || size.width < 160.dp -> WidgetBucket.Compact
+        size.height < 220.dp && size.width < 280.dp -> WidgetBucket.Medium
+        else -> WidgetBucket.Expanded
+    }
 }
 
-/** The surface card filling the widget — brighter surface tier, 20dp radius. */
+object WidgetSizeModes {
+    val Compact = DpSize(110.dp, 110.dp)
+    val Medium = DpSize(180.dp, 110.dp)
+    val Expanded = DpSize(250.dp, 180.dp)
+    val Extra = DpSize(300.dp, 300.dp)
+    val All = setOf(Compact, Medium, Expanded, Extra)
+}
+
+fun GlanceModifier.openApp(context: Context): GlanceModifier {
+    val launch = context.packageManager.getLaunchIntentForPackage(context.packageName)
+        ?: return this
+    launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    return clickable(actionStartActivity(launch))
+}
+
 @Composable
-fun WidgetCard(content: @Composable () -> Unit) {
+fun WidgetCard(
+    modifier: GlanceModifier = GlanceModifier,
+    content: @Composable () -> Unit,
+) {
+    val colors = LocalWidgetColors.current
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(W.surface)
+            .background(colors.surface)
             .cornerRadius(20.dp)
-            .padding(16.dp),
+            .padding(16.dp)
+            .then(modifier),
     ) { content() }
 }
 
 @Composable
 fun WidgetEyebrow(text: String) {
+    val colors = LocalWidgetColors.current
     Text(
         text.uppercase(),
-        style = TextStyle(color = W.txtLow, fontSize = 10.sp, fontWeight = FontWeight.Medium),
+        style = TextStyle(color = colors.txtLow, fontSize = 10.sp, fontWeight = FontWeight.Medium),
     )
 }
 
 @Composable
 fun WidgetBigNumber(value: String, suffix: String? = null) {
+    val colors = LocalWidgetColors.current
     Row(verticalAlignment = Alignment.Bottom) {
-        Text(value, style = TextStyle(color = W.txtHi, fontSize = 34.sp, fontWeight = FontWeight.Bold))
+        Text(value, style = TextStyle(color = colors.txtHi, fontSize = 34.sp, fontWeight = FontWeight.Bold))
         if (suffix != null) {
             Text(
                 "  $suffix",
-                style = TextStyle(color = W.txtMid, fontSize = 13.sp, fontWeight = FontWeight.Medium),
+                style = TextStyle(color = colors.txtMid, fontSize = 13.sp, fontWeight = FontWeight.Medium),
             )
         }
     }
@@ -73,27 +93,28 @@ fun WidgetBigNumber(value: String, suffix: String? = null) {
 
 @Composable
 fun WidgetProgress(fraction: Float) {
+    val colors = LocalWidgetColors.current
     LinearProgressIndicator(
         progress = fraction.coerceIn(0f, 1f),
         modifier = GlanceModifier.fillMaxWidth().height(4.dp).cornerRadius(2.dp),
-        color = W.nodeLived,
-        backgroundColor = W.nodeFuture,
+        color = colors.nodeLived,
+        backgroundColor = colors.nodeFuture,
     )
 }
 
-/** A labelled cycle row: name on the left, percentage on the right, track beneath. */
 @Composable
 fun WidgetCycle(label: String, pct: Double) {
+    val colors = LocalWidgetColors.current
     Column(GlanceModifier.fillMaxWidth().padding(vertical = 3.dp)) {
         Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 label,
-                style = TextStyle(color = W.txtMid, fontSize = 12.sp, fontWeight = FontWeight.Medium),
+                style = TextStyle(color = colors.txtMid, fontSize = 12.sp, fontWeight = FontWeight.Medium),
                 modifier = GlanceModifier.defaultWeight(),
             )
             Text(
                 "${(pct * 100).toInt()}%",
-                style = TextStyle(color = W.txtHi, fontSize = 12.sp, fontWeight = FontWeight.Medium),
+                style = TextStyle(color = colors.txtHi, fontSize = 12.sp, fontWeight = FontWeight.Medium),
             )
         }
         Spacer(GlanceModifier.height(4.dp))
@@ -103,5 +124,6 @@ fun WidgetCycle(label: String, pct: Double) {
 
 @Composable
 fun WidgetCaption(text: String) {
-    Text(text, style = TextStyle(color = W.txtLow, fontSize = 11.sp))
+    val colors = LocalWidgetColors.current
+    Text(text, style = TextStyle(color = colors.txtLow, fontSize = 11.sp))
 }

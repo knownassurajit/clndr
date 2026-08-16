@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -36,10 +38,13 @@ data class ClndrSettingsState(
     val birthDate: LocalDate?,
     val themeMode: ThemeMode,
     val sunriseAutoEnabled: Boolean,
+    val widgetsFollowAppTheme: Boolean = true,
 )
 
+enum class ClndrPinTarget { YearProgress, YearCalendar, Life, Goals }
+
 private val DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.US)
-private val THEME_OPTIONS = listOf("Light", "Dark", "Auto")
+private val THEME_OPTIONS = listOf("Light", "Dark", "System")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +54,8 @@ fun ClndrSettingsSheet(
     onSetBirthDate: (LocalDate) -> Unit,
     onSetThemeMode: (ThemeMode) -> Unit,
     onToggleSunriseAuto: (Boolean) -> Unit,
-    onPinWidget: () -> Unit,
+    onToggleWidgetsFollowApp: (Boolean) -> Unit,
+    onPinWidget: (ClndrPinTarget) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val palette = MaterialTheme.clndr
@@ -65,6 +71,7 @@ fun ClndrSettingsSheet(
         Column(
             Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 22.dp)
                 .padding(bottom = 30.dp),
         ) {
@@ -96,13 +103,30 @@ fun ClndrSettingsSheet(
             )
             SettingRow(
                 title = "Twilight engine",
-                sub = "Switches theme at local sunrise & sunset",
+                sub = if (state.sunriseAutoEnabled) {
+                    "On — overrides Light / Dark / System at local sunrise and sunset"
+                } else {
+                    "Switches theme at local sunrise and sunset"
+                },
             ) {
                 ThemedSwitch(checked = state.sunriseAutoEnabled, onChange = onToggleSunriseAuto)
             }
 
             SubHead("Home screen", Modifier.padding(top = 14.dp, bottom = 10.dp))
-            GhostButton(text = "Preview & add widgets", onClick = onPinWidget)
+            SettingRow(
+                title = "Widgets follow app theme",
+                sub = if (state.widgetsFollowAppTheme) {
+                    "Light, Dark, System, and Twilight apply to widgets"
+                } else {
+                    "Widgets follow the system light / dark setting"
+                },
+            ) {
+                ThemedSwitch(checked = state.widgetsFollowAppTheme, onChange = onToggleWidgetsFollowApp)
+            }
+            GhostButton(text = "Add Year Progress widget", onClick = { onPinWidget(ClndrPinTarget.YearProgress) })
+            GhostButton(text = "Add Year Calendar widget", onClick = { onPinWidget(ClndrPinTarget.YearCalendar) })
+            GhostButton(text = "Add Life widget", onClick = { onPinWidget(ClndrPinTarget.Life) })
+            GhostButton(text = "Add Goals widget", onClick = { onPinWidget(ClndrPinTarget.Goals) })
         }
     }
 
@@ -156,7 +180,8 @@ private fun GhostButton(text: String, onClick: () -> Unit) {
             .clip(RoundedCornerShape(16.dp))
             .border(1.dp, palette.lineStrong, RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .padding(vertical = 14.dp),
+            .padding(vertical = 14.dp)
+            .padding(bottom = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(text, style = MaterialTheme.typography.labelLarge, color = palette.txtHi)

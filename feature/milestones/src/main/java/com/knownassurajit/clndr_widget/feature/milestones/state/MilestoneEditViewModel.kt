@@ -75,7 +75,7 @@ class MilestoneEditViewModel @Inject constructor(
         }
         _state.update { it.copy(isSaving = true) }
         viewModelScope.launch {
-            saveMilestone(draft.toMilestone(), draft.mirrorToCalendar)
+            saveMilestone(draft.toMilestone(), draft.mirrorToCalendar, draft.mirrorToClock)
             _state.update { it.copy(isSaving = false) }
             _effects.tryEmit(MilestoneEditEffect.NavigateBack)
         }
