@@ -1,0 +1,449 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [develop, master]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      rollback_version:
+        description: 'Optional rollback version tag (e.g. v1.0.0)'
+        required: false
+        default: ''
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: eclipse-temurin:17-jdk-jammy
+    steps:
+      - name: Install container prerequisites
+        run: |
+          apt-get update
+          apt-get install -y unzip curl
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/master' }}
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v3
+
+      - name: Detekt
+        run: ./gradlew detekt --no-daemon
+
+      - name: Android Lint
+        run: ./gradlew lintDebug --no-daemon
+
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest --no-daemon
+
+      - name: Pure-JVM datetime tests
+        run: ./gradlew :core:datetime:test --no-daemon
+
+      - name: Assemble debug
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload debug APK
+        if: github.ref == 'refs/heads/develop' && success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clndr-app-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
+
+      - name: Upload detekt report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detekt-report
+          path: build/reports/detekt/
+          if-no-files-found: ignore
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: '**/build/reports/tests/**'
+          if-no-files-found: ignore
+
+  debug-release:
+    name: Create Pre-release
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Determine Release Info
+        id: release_info
+        run: |
+          VERSION_NAME=$(grep "versionName =" app/build.gradle.kts | head -n 1 | awk -F'"' '{print $2}')
+          SHORT_SHA=$(git rev-parse --short=7 HEAD)
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+          echo "TAG_NAME=v$VERSION_NAME-dev.${{ github.run_number }}" >> $GITHUB_ENV
+          echo "RELEASE_NAME=Pre-release Debug v$VERSION_NAME-dev.${{ github.run_number }}" >> $GITHUB_ENV
+
+      - name: Generate Release Body
+        run: |
+          cat > release_body.md <<EOF
+          ### Release Summary
+          - **Release Channel:** pre-release-debug
+          - **Version:** v$VERSION_NAME
+          - **Branch:** ${{ github.ref_name }}
+          - **Commit:** $SHORT_SHA
+          - **Commit Message:** $(git log -1 --pretty=format:'%s')
+          - **Build Time:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          - **Workflow Run:** [#${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+          Pre-release debug build from develop for validation and testing.
+
+          ### What Changed
+          $(git log --pretty=format:'- %h %s (%an, %ad)' --date=short -n 15 --no-merges)
+          EOF
+
+      - name: Decode keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::warning::No KEYSTORE_B64 secret — debug APK will be unsigned."
+            exit 0
+          fi
+          echo "$KEYSTORE_B64" | base64 -d > keystore.jks
+
+      - name: Build debug APK
+        env:
+          CLNDR_STORE_FILE: ${{ github.workspace }}/keystore.jks
+          CLNDR_STORE_PASSWORD: ${{ secrets.CLNDR_STORE_PASSWORD }}
+          CLNDR_KEY_ALIAS: ${{ secrets.CLNDR_KEY_ALIAS }}
+          CLNDR_KEY_PASSWORD: ${{ secrets.CLNDR_KEY_PASSWORD }}
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Publish GitHub Pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: ${{ env.RELEASE_NAME }}
+          body_path: release_body.md
+          draft: false
+          prerelease: true
+          make_latest: false
+          files: |
+            app/build/outputs/apk/debug/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  pr-summary:
+    name: PR summary
+    needs: test
+    if: always() && github.event_name == 'pull_request' && github.base_ref == 'master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: eclipse-temurin:17-jdk-jammy
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Install container prerequisites
+        run: |
+          apt-get update
+          apt-get install -y unzip curl
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Run checks and capture results
+        id: checks
+        continue-on-error: true
+        run: |
+          set +e
+
+          run_step() {
+            local name="$1"; shift
+            local outfile="$1"; shift
+            "$@" > "$outfile" 2>&1
+            local status=$?
+            if [ "$status" -eq 0 ]; then
+              echo "${name}_STATUS=pass" >> "$GITHUB_ENV"
+            else
+              echo "${name}_STATUS=fail" >> "$GITHUB_ENV"
+            fi
+            return 0
+          }
+
+          run_step DETEKT detekt.log ./gradlew detekt --no-daemon
+          run_step LINT lint.log ./gradlew lintDebug --no-daemon
+          run_step UNIT_TEST unittest.log ./gradlew testDebugUnitTest --no-daemon
+          run_step DATETIME_TEST datetime.log ./gradlew :core:datetime:test --no-daemon
+
+          DETEKT_ISSUES=$(grep -ohE '[0-9]+ weighted issues' detekt.log | tail -n 1 | awk '{print $1}')
+          echo "DETEKT_ISSUES=${DETEKT_ISSUES:-0}" >> "$GITHUB_ENV"
+
+          UNIT_TESTS_RUN=$(grep -ohE '[0-9]+ tests completed' unittest.log | tail -n 1 | awk '{print $1}')
+          echo "UNIT_TESTS_RUN=${UNIT_TESTS_RUN:-unknown}" >> "$GITHUB_ENV"
+
+      - name: Determine version delta
+        id: version_delta
+        run: |
+          CURRENT_VERSION=$(grep "versionName =" app/build.gradle.kts | head -n 1 | awk -F'"' '{print $2}')
+          LAST_STABLE_TAG=$(git tag --list 'v*' --sort=-creatordate | grep -vE '\-dev\.' | head -n 1)
+          echo "CURRENT_VERSION=$CURRENT_VERSION" >> "$GITHUB_ENV"
+          if [ -n "$LAST_STABLE_TAG" ]; then
+            echo "LAST_STABLE_TAG=$LAST_STABLE_TAG" >> "$GITHUB_ENV"
+            COMMITS_SINCE=$(git rev-list "${LAST_STABLE_TAG}..HEAD" --count 2>/dev/null || echo "unknown")
+            echo "COMMITS_SINCE=$COMMITS_SINCE" >> "$GITHUB_ENV"
+          else
+            echo "LAST_STABLE_TAG=(none found)" >> "$GITHUB_ENV"
+            echo "COMMITS_SINCE=unknown" >> "$GITHUB_ENV"
+          fi
+
+      - name: Generate changelog preview
+        run: |
+          git log --pretty=format:'- %h %s (%an, %ad)' --date=short -n 20 --no-merges > changelog_preview.txt || true
+
+      - name: Build summary
+        run: |
+          {
+            echo "## PR Summary: develop -> master"
+            echo
+            echo "| Check | Result |"
+            echo "| --- | --- |"
+            echo "| Detekt | ${DETEKT_STATUS:-unknown} (${DETEKT_ISSUES:-0} weighted issues) |"
+            echo "| Android Lint | ${LINT_STATUS:-unknown} |"
+            echo "| Unit tests (testDebugUnitTest) | ${UNIT_TEST_STATUS:-unknown} |"
+            echo "| Pure-JVM datetime tests | ${DATETIME_TEST_STATUS:-unknown} |"
+            echo
+            echo "### Version delta"
+            echo "- Current \`versionName\`: \`$CURRENT_VERSION\`"
+            echo "- Last stable tag: \`$LAST_STABLE_TAG\`"
+            echo "- Commits since last stable release: $COMMITS_SINCE"
+            echo
+            echo "### Changelog preview (last 20 commits)"
+            echo '```'
+            cat changelog_preview.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          {
+            echo "## PR Summary: develop -> master"
+            echo
+            echo "| Check | Result |"
+            echo "| --- | --- |"
+            echo "| Detekt | ${DETEKT_STATUS:-unknown} (${DETEKT_ISSUES:-0} weighted issues) |"
+            echo "| Android Lint | ${LINT_STATUS:-unknown} |"
+            echo "| Unit tests (testDebugUnitTest) | ${UNIT_TEST_STATUS:-unknown} |"
+            echo "| Pure-JVM datetime tests | ${DATETIME_TEST_STATUS:-unknown} |"
+            echo
+            echo "### Version delta"
+            echo "- Current \`versionName\`: \`$CURRENT_VERSION\`"
+            echo "- Last stable tag: \`$LAST_STABLE_TAG\`"
+            echo "- Commits since last stable release: $COMMITS_SINCE"
+            echo
+            echo "### Changelog preview (last 20 commits)"
+            echo '```'
+            cat changelog_preview.txt
+            echo '```'
+          } > pr_comment_body.md
+
+      - name: Post PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('pr_comment_body.md', 'utf8');
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const marker = '## PR Summary: develop -> master';
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Fail job if any check failed
+        if: env.DETEKT_STATUS == 'fail' || env.LINT_STATUS == 'fail' || env.UNIT_TEST_STATUS == 'fail' || env.DATETIME_TEST_STATUS == 'fail'
+        run: |
+          echo "One or more checks failed. See summary above."
+          exit 1
+
+  stable-release:
+    name: Prepare Release, Publish GitHub & Play Console
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      PLAY_CONSOLE_JSON: ${{ secrets.PLAY_CONSOLE_JSON }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout rollback tag
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.rollback_version != ''
+        run: git checkout "${{ github.event.inputs.rollback_version }}"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v3
+
+      - name: Detekt, lint, unit tests
+        run: ./gradlew detekt lintDebug testDebugUnitTest :core:datetime:test --no-daemon
+
+      - name: Extract Version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.rollback_version }}" ]; then
+            VERSION_NAME="${{ github.event.inputs.rollback_version }}"
+            VERSION_NAME="${VERSION_NAME#v}"
+            VERSION_CODE=$(date +'%Y%m%d%H')
+          else
+            VERSION_NAME=$(grep "versionName =" app/build.gradle.kts | head -n 1 | awk -F'"' '{print $2}')
+            VERSION_CODE=$(grep "versionCode =" app/build.gradle.kts | head -n 1 | awk '{print $3}')
+          fi
+          SHORT_SHA=$(git rev-parse --short=7 HEAD)
+          echo "versionName=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "versionCode=$VERSION_CODE" >> $GITHUB_OUTPUT
+          echo "shortSha=$SHORT_SHA" >> $GITHUB_OUTPUT
+
+      - name: Decode keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > keystore.jks
+          fi
+
+      - name: Build Android Release Artifacts (APK & AAB)
+        env:
+          CLNDR_STORE_FILE: ${{ github.workspace }}/keystore.jks
+          CLNDR_STORE_PASSWORD: ${{ secrets.CLNDR_STORE_PASSWORD }}
+          CLNDR_KEY_ALIAS: ${{ secrets.CLNDR_KEY_ALIAS }}
+          CLNDR_KEY_PASSWORD: ${{ secrets.CLNDR_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease bundleRelease --no-daemon
+
+      - name: Point rollback branch at this SHA
+        run: |
+          BRANCH_NAME="release/clndr/${{ steps.version.outputs.versionName }}"
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git branch -f "$BRANCH_NAME" HEAD
+          git push origin "$BRANCH_NAME" || git push origin "HEAD:refs/heads/$BRANCH_NAME"
+
+      - name: Generate Release Notes
+        run: |
+          mkdir -p release_notes/en-US
+          cat > release_notes/en-US/default.txt <<EOF
+          Source:
+          branch=release/clndr/${{ steps.version.outputs.versionName }}
+          commit=${{ github.sha }}
+          workflow=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EOF
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.versionName }}
+          name: "CLNDR v${{ steps.version.outputs.versionName }}"
+          body: |
+            ### Release Summary
+            - **App:** CLNDR
+            - **Version:** v${{ steps.version.outputs.versionName }}
+            - **Commit:** ${{ steps.version.outputs.shortSha }}
+            - **Release Branch:** `release/clndr/${{ steps.version.outputs.versionName }}`
+          draft: false
+          prerelease: false
+          files: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to Google Play (Internal Track)
+        if: env.PLAY_CONSOLE_JSON != ''
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_CONSOLE_JSON }}
+          packageName: com.knownassurajit.clndr_widget.app
+          releaseFiles: app/build/outputs/bundle/release/*.aab
+          track: internal
+          status: completed
+          whatsNewDirectory: release_notes
+          releaseName: clndr-${{ steps.version.outputs.versionName }}-${{ steps.version.outputs.shortSha }}
