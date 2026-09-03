@@ -5,10 +5,10 @@ a 110-year life grid, your year in progress, and the milestones that shape it.
 
 ## Stack
 
-- **Kotlin 2.0**, **Jetpack Compose** (Material 3), **Jetpack Glance** for home-screen widgets.
-- **Room 2.6** for persistence, **Hilt 2.52** for DI.
+- **Kotlin 2.1**, **Jetpack Compose** (Material 3 Expressive + dynamic color), **Jetpack Glance** for home-screen widgets.
+- **Room 2.7** for persistence, **Hilt 2.56** for DI.
 - **`java.time`** with core-library desugaring (works on `minSdk 26`).
-- **AGP 8.6**, **Gradle 8.9**, KSP for codegen.
+- **AGP 8.9**, **Gradle 8.9**, KSP for codegen.
 
 ## Modules
 
