@@ -34,21 +34,21 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Set up JDK 17
-        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@00186d05c5dea8ab6b52aa2e3012398c3cc3d24b
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6b82f7e4f2de2f67b4f5e6
+        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
 
       - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@9c66539db1ef3f99efb786a3d5e51e60b3e0e3b4
+        uses: gradle/actions/wrapper-validation@ac638b010cf58a27ee6c972d7336334ccaf61c96
 
       - name: Detekt
         run: ./gradlew detekt --no-daemon
@@ -67,7 +67,7 @@ jobs:
 
       - name: Upload debug APK
         if: github.ref == 'refs/heads/develop' && success()
-        uses: actions/upload-artifact@ea165f8d65b6f75b7ca4f3a20b5e1e8e7e1adf6b
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: clndr-app-debug
           path: app/build/outputs/apk/debug/*.apk
@@ -75,7 +75,7 @@ jobs:
 
       - name: Upload detekt report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6f75b7ca4f3a20b5e1e8e7e1adf6b
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: detekt-report
           path: build/reports/detekt/
@@ -83,7 +83,7 @@ jobs:
 
       - name: Upload test reports
         if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6f75b7ca4f3a20b5e1e8e7e1adf6b
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: test-reports
           path: '**/build/reports/tests/**'
@@ -104,13 +104,13 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 17
-        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6b82f7e4f2de2f67b4f5e6
+        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96
 
       - name: Determine Release Info
         id: release_info
@@ -159,7 +159,7 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Publish GitHub Pre-release
-        uses: softprops/action-gh-release@da05d552573ad5ece0dc98dfdbf2d8a2073d3c74
+        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda
         with:
           tag_name: ${{ env.TAG_NAME }}
           name: ${{ env.RELEASE_NAME }}
@@ -195,16 +195,16 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 17
-        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@00186d05c5dea8ab6b52aa2e3012398c3cc3d24b
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6b82f7e4f2de2f67b4f5e6
+        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96
 
       - name: Run checks and capture results
         id: checks
@@ -355,16 +355,16 @@ jobs:
         run: git checkout "${{ github.event.inputs.rollback_version }}"
 
       - name: Set up JDK 17
-        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6b82f7e4f2de2f67b4f5e6
+        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96
 
       - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@9c66539db1ef3f99efb786a3d5e51e60b3e0e3b4
+        uses: gradle/actions/wrapper-validation@ac638b010cf58a27ee6c972d7336334ccaf61c96
 
       - name: Detekt, lint, unit tests
         run: ./gradlew detekt lintDebug testDebugUnitTest :core:datetime:test --no-daemon
@@ -420,7 +420,7 @@ jobs:
           EOF
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@da05d552573ad5ece0dc98dfdbf2d8a2073d3c74
+        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda
         with:
           tag_name: v${{ steps.version.outputs.versionName }}
           name: "CLNDR v${{ steps.version.outputs.versionName }}"
@@ -440,7 +440,7 @@ jobs:
 
       - name: Publish to Google Play (Internal Track)
         if: env.PLAY_CONSOLE_JSON != ''
-        uses: r0adkll/upload-google-play@8959b834a12e9d0c61d9c5dce63f6e2cfd80d7ae
+        uses: r0adkll/upload-google-play@935ef9c68bb393a8e6116b1575626a7f5be3a7fb
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_CONSOLE_JSON }}
           packageName: com.knownassurajit.clndr_widget.app
@@ -459,6 +459,6 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: actions/dependency-review-action@da3b6d89b7ff0e7b01db34e8fa88de4ec57b3fef
+      - uses: actions/dependency-review-action@da24556b548a50705dd671f47852072ea4c105d9
         with:
           fail-on-severity: high
