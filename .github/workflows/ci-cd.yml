@@ -48,7 +48,7 @@ jobs:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
 
       - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@ac638b010cf58a27ee6c972d7336334ccaf61c96
+        uses: gradle/actions/wrapper-validation@9c971963bec38e04b3d30dcc455b5382be2fdbfb
 
       - name: Detekt
         run: ./gradlew detekt --no-daemon
@@ -364,7 +364,7 @@ jobs:
         uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96
 
       - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@ac638b010cf58a27ee6c972d7336334ccaf61c96
+        uses: gradle/actions/wrapper-validation@9c971963bec38e04b3d30dcc455b5382be2fdbfb
 
       - name: Detekt, lint, unit tests
         run: ./gradlew detekt lintDebug testDebugUnitTest :core:datetime:test --no-daemon
