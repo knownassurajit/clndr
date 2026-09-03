@@ -25,6 +25,7 @@ mockk = "1.13.13"
 truth = "1.4.4"
 detekt = "1.23.8"
 robolectric = "4.13"
+owaspDependencyCheck = "11.1.1"
 
 [libraries]
 # Core
@@ -102,3 +103,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+owasp-dependencycheck = { id = "org.owasp.dependencycheck", version.ref = "owaspDependencyCheck" }
