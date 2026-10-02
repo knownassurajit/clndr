@@ -10,3 +10,6 @@
 
 # Kotlin coroutines
 -keepclassmembers class kotlinx.coroutines.** { volatile <fields>; }
+
+# R8 in AGP 8.9 flags the java.time backport name; the AAB contains j$.time.DesugarLocalDate.
+-dontwarn java.time.DesugarLocalDate
