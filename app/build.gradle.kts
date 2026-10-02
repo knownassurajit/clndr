@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace = "com.knownassurajit.clndr_widget.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.knownassurajit.clndr_widget.app"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
 
         // Deterministic versioning formula. Local builds use this versionCode.
         // CI may set CLNDR_VERSION_CODE (absolute, used for rollbacks) or
@@ -21,7 +21,7 @@ android {
         val major = 0
         val minor = 0
         val patch = 0
-        val build = 4
+        val build = 5
 
         val computedVersionCode = major * 1_000_000 + minor * 10_000 + patch * 100 + build
         val versionCodeOverride = System.getenv("CLNDR_VERSION_CODE")?.toIntOrNull()?.takeIf { it > 0 }
@@ -103,7 +103,7 @@ android {
         includeInApk = true
         includeInBundle = true
     }
-    buildToolsVersion = "35.0.0"
+    buildToolsVersion = "36.0.0"
 }
 
 dependencies {
