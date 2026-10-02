@@ -15,31 +15,41 @@ android {
         minSdk = 26
         targetSdk = 36
 
-        // Deterministic versioning formula
+        // Deterministic versioning formula. Local builds use this versionCode.
+        // CI may set CLNDR_VERSION_CODE (absolute, used for rollbacks) or
+        // CLNDR_VERSION_CODE_OFFSET (added so each master merge is newer on Play).
         val major = 0
         val minor = 0
         val patch = 0
         val build = 5
 
-        versionCode = major * 1_000_000 + minor * 10_000 + patch * 100 + build
+        val computedVersionCode = major * 1_000_000 + minor * 10_000 + patch * 100 + build
+        val versionCodeOverride = System.getenv("CLNDR_VERSION_CODE")?.toIntOrNull()?.takeIf { it > 0 }
+        val versionCodeOffset = System.getenv("CLNDR_VERSION_CODE_OFFSET")?.toIntOrNull()?.takeIf { it > 0 } ?: 0
+        versionCode = versionCodeOverride ?: (computedVersionCode + versionCodeOffset)
         versionName = "$major.$minor.$patch.$build"
 
         resourceConfigurations += listOf("en", "ar", "de", "es-rES", "es-rUS", "fr", "he", "hr", "hu", "in", "it", "ja", "nl", "pl", "pt-rBR", "ru-rRU", "sv", "tr", "uk", "zh")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    val releaseStoreFile = System.getenv("CLNDR_STORE_FILE")
+    val hasReleaseKeystore = !releaseStoreFile.isNullOrEmpty() && file(releaseStoreFile).exists()
+    val requireReleaseSigning = System.getenv("CLNDR_REQUIRE_RELEASE_SIGNING") == "true"
+    if (requireReleaseSigning && !hasReleaseKeystore) {
+        error(
+            "Signed release requires CLNDR_STORE_FILE to point at a keystore. " +
+                "CI secrets: KEYSTORE_B64, CLNDR_STORE_PASSWORD, CLNDR_KEY_ALIAS, CLNDR_KEY_PASSWORD.",
+        )
+    }
+
     signingConfigs {
         create("release") {
-            val storeFilePath = System.getenv("CLNDR_STORE_FILE")
-            val storePasswordEnv = System.getenv("CLNDR_STORE_PASSWORD")
-            val keyAliasEnv = System.getenv("CLNDR_KEY_ALIAS")
-            val keyPasswordEnv = System.getenv("CLNDR_KEY_PASSWORD")
-
-            if (!storeFilePath.isNullOrEmpty() && file(storeFilePath).exists()) {
-                storeFile = file(storeFilePath)
-                storePassword = storePasswordEnv
-                keyAlias = keyAliasEnv
-                keyPassword = keyPasswordEnv
+            releaseStoreFile?.takeIf { hasReleaseKeystore }?.let { path ->
+                storeFile = file(path)
+                storePassword = System.getenv("CLNDR_STORE_PASSWORD")
+                keyAlias = System.getenv("CLNDR_KEY_ALIAS")
+                keyPassword = System.getenv("CLNDR_KEY_PASSWORD")
             }
         }
     }
@@ -54,8 +64,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            val storeFilePath = System.getenv("CLNDR_STORE_FILE")
-            if (!storeFilePath.isNullOrEmpty() && file(storeFilePath).exists()) {
+            if (hasReleaseKeystore || requireReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
             }
             ndk {
