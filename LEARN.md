@@ -39,6 +39,10 @@ A running log of design choices, gotchas, and "next time, do this differently" n
   works locally here; GitHub Actions installs Temurin 17. The file made every CI run fail
   with `Cannot find a Java installation … vendor matching('microsoft')`. Let the wrapper
   use `JAVA_HOME`; modules still compile with `jvmToolchain(17)`.
+- Play upload must not use `if: env.PLAY_CONSOLE_JSON != ''`. Multiline service-account
+  JSON makes that expression skip the step. Detect the secret in the shell and branch on
+  a boolean. `r0adkll/upload-google-play` release notes are `whatsnew-en-US` (no
+  extension), not Fastlane's `en-US/default.txt`.
 
 ## 2. Cycle log
 
@@ -98,7 +102,7 @@ SettingsRepository.themeMode ─────────────────
 - Clock alarms are fire-and-forget into the system Clock app (no alarm id to persist).
 
 **Gotchas**
-- Play step `if: env.PLAY_CONSOLE_JSON != ''` is false unless the secret is copied onto **job-level** `env`.
+- Do not gate Play upload on `if: env.PLAY_CONSOLE_JSON != ''`. A multiline service-account JSON makes that expression a permanent skip. Detect presence in the shell and branch on a boolean output. Release notes for `r0adkll/upload-google-play` are `whatsnew-<bcp47>` files with no extension, not Fastlane's `en-US/default.txt`.
 - `CalendarMirror` must query a writable calendar; hardcoded id `1` fails on most devices.
 - Gradle daemon JVM criteria are independent of `jvmToolchain(17)` — mismatch reds all CI.
 
@@ -106,6 +110,24 @@ SettingsRepository.themeMode ─────────────────
 - Dogfood 15-minute widget `PeriodicWorkRequest` vs battery.
 - Play Console justification for `USE_EXACT_ALARM`.
 - Optional multi-process DataStore instead of the SharedPreferences sidecar.
+
+### 2026-10-02 — Master Play upload path
+
+**Scope**: `stable-release` on push to `master` or `main` now builds a signed release AAB, checks `applicationId` against `com.knownassurajit.clndr_widget.app`, and uploads that AAB to the Play internal track when `PLAY_CONSOLE_JSON` is actually set.
+
+**Deviations**
+- Play `versionCode` is the gradle formula plus `github.run_number` (`CLNDR_VERSION_CODE_OFFSET`). `versionName` stays in `app/build.gradle.kts`. Without the offset, a second master merge reuses versionCode 4 and Play rejects it.
+- Rollback dispatches still replace versionCode with `yyyyMMddHH` via `CLNDR_VERSION_CODE`.
+
+**Gotchas**
+- Comparing the Play JSON secret in an `if:` expression skips the upload even after the secret is copied to job `env`, because the key is multiline. Presence has to be a shell boolean.
+- `upload-google-play` ignores `release_notes/en-US/default.txt`. The file must be named `whatsnew-en-US`.
+- Grepping `versionName =` out of `app/build.gradle.kts` returns the Kotlin template, not `0.0.0.4`. Read `output-metadata.json` after the bundle task.
+- Signing secrets are required for this job. `PLAY_CONSOLE_JSON` is documented, not fabricated. The first API upload still needs the app to exist in Play Console.
+
+**Follow-ups**
+- Bump the `build` component in `app/build.gradle.kts` when the user-facing version should change. The CI offset only keeps Play versionCodes increasing.
+- Re-check `changesNotSentForReview` if the first real upload returns the Play review-parameter error.
 
 ## 3. Update rule
 
