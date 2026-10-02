@@ -9,7 +9,7 @@
     <string name="widget_life_matrix_desc">Weeks lived and your age, at a glance.</string>
     <string name="widget_goals_label">Next Goal</string>
     <string name="widget_goals_desc">Countdown to your nearest milestone.</string>
-    <string name="widget_preview_year_progress_hero">42% elapsed</string>
+    <string name="widget_preview_year_progress_hero">42%% elapsed</string>
     <string name="widget_preview_year_calendar_hero">228 of 365</string>
     <string name="widget_preview_life_hero">1,352 weeks</string>
     <string name="widget_preview_goals_hero">14 days</string>

@@ -5,10 +5,10 @@ a 110-year life grid, your year in progress, and the milestones that shape it.
 
 ## Stack
 
-- **Kotlin 2.0**, **Jetpack Compose** (Material 3), **Jetpack Glance** for home-screen widgets.
-- **Room 2.6** for persistence, **Hilt 2.52** for DI.
+- **Kotlin 2.1**, **Jetpack Compose** (Material 3 Expressive + dynamic color), **Jetpack Glance** for home-screen widgets.
+- **Room 2.7** for persistence, **Hilt 2.56** for DI.
 - **`java.time`** with core-library desugaring (works on `minSdk 26`).
-- **AGP 8.6**, **Gradle 8.9**, KSP for codegen.
+- **AGP 8.9**, **Gradle 8.9**, KSP for codegen.
 
 ## Modules
 
@@ -51,9 +51,14 @@ JDK 17 (Temurin) is required.
 
 ## CI/CD
 
-`.github/workflows/ci_cd.yml` runs detekt, Android Lint, unit tests, and `assembleDebug` on every push and pull request. Pushes to **`develop`** also publish a GitHub pre-release with a debug APK.
+A single workflow, `.github/workflows/ci-cd.yml`, drives the whole pipeline in four jobs:
 
-Pushes to **`master`** run `.github/workflows/play-release.yml`: tests, signed APK + AAB, a stable GitHub release (`v$versionName`), and (when `PLAY_CONSOLE_JSON` is set) upload to the Play Console **internal** track. A `release/clndr/$versionName` branch is pointed at the built SHA for rollback tracking.
+- **`test`** — runs on every push to `develop`, `master`, or `main`, and on all pull requests. Runs inside a containerized `eclipse-temurin:17-jdk-jammy` job (`unzip`/`curl` are installed first so `android-actions/setup-android@v3` can fetch the SDK) for a reproducible, host-independent build environment. Runs detekt, Android Lint, unit tests, the pure-JVM `:core:datetime:test` suite, and `assembleDebug`; uploads the debug APK (on `develop` success), the detekt report (always), and test reports (on failure).
+- **`debug-release`** — on push to `develop`, after `test` passes: extracts the version, builds a changelog from recent commits, decodes the signing keystore from `KEYSTORE_B64` (falling back to an unsigned build if the secret is absent), runs `assembleDebug`, and publishes a GitHub pre-release tagged `v$versionName-dev.$RUN_NUMBER`.
+- **`pr-summary`** — on pull requests targeting `master` or `main`: re-runs the containerized checks to capture per-check pass/fail status and detekt finding counts, computes the version delta and commit count since the last stable tag, and posts a detailed summary both to the workflow's step summary and as a comment on the PR (created or updated via `actions/github-script@v7`). This is the pre-merge visibility step before code reaches `master`.
+- **`stable-release`** — on push to `master` (and `main`, if that becomes the production branch), after `test` passes: builds a signed release APK and AAB, checks the AAB `applicationId` is `com.knownassurajit.clndr_widget.app`, publishes a GitHub release, and uploads that AAB to the Google Play **internal** track when `PLAY_CONSOLE_JSON` is set. Signing secrets are required. The Play secret is not invented; a missing key skips only the Play upload and is reported in the job log. See [`.github/README.md`](./.github/README.md) for the secret table and the one-time Console setup.
+
+Required secrets: `KEYSTORE_B64`, `CLNDR_STORE_PASSWORD`, `CLNDR_KEY_ALIAS`, `CLNDR_KEY_PASSWORD` to sign the release, and `PLAY_CONSOLE_JSON` to upload it. None of these values are committed.
 
 ## Documentation
 
