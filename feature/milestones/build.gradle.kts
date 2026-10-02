@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.knownassurajit.clndr_widget.feature.milestones"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
