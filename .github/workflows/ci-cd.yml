@@ -70,7 +70,7 @@ jobs:
 
       - name: Upload debug APK
         if: github.ref == 'refs/heads/develop' && success()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: clndr-app-debug
           path: app/build/outputs/apk/debug/*.apk
@@ -78,7 +78,7 @@ jobs:
 
       - name: Upload detekt report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: detekt-report
           path: build/reports/detekt/
@@ -86,7 +86,7 @@ jobs:
 
       - name: Upload test reports
         if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: test-reports
           path: '**/build/reports/tests/**'
@@ -633,7 +633,7 @@ jobs:
 
       - name: Upload signed release artifacts
         if: always() && steps.aab.outcome == 'success'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: clndr-release-${{ steps.aab.outputs.versionName }}-${{ steps.aab.outputs.versionCode }}
           path: build/ci-release/*
