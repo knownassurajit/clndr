@@ -448,95 +448,8 @@ jobs:
         id: aab
         env:
           EXPECTED_APPLICATION_ID: ${{ env.CLNDR_APPLICATION_ID }}
-        run: |
-          python3 - <<'PY'
-          import json, os, shutil, subprocess, sys
-
-          expected = os.environ["EXPECTED_APPLICATION_ID"]
-          bundle_dir = "app/build/outputs/bundle/release"
-          meta_path = os.path.join(bundle_dir, "output-metadata.json")
-          with open(meta_path, encoding="utf-8") as fh:
-              meta = json.load(fh)
-          app_id = meta.get("applicationId")
-          if app_id != expected:
-              print(f"::error::AAB applicationId is {app_id!r}; Play packageName must be {expected!r}.")
-              sys.exit(1)
-          elements = meta.get("elements") or []
-          if len(elements) != 1:
-              print(f"::error::Expected exactly one release AAB, found {len(elements)} in {meta_path}.")
-              sys.exit(1)
-          element = elements[0]
-          output_file = element.get("outputFile") or ""
-          aab_path = os.path.join(bundle_dir, output_file)
-          normalized = aab_path.replace("\\", "/")
-          if not normalized.startswith("app/build/outputs/bundle/release/") or not normalized.endswith(".aab"):
-              print(f"::error::Unexpected release AAB path {aab_path!r}.")
-              sys.exit(1)
-          if not os.path.isfile(aab_path):
-              print(f"::error::AAB listed in output-metadata.json was not found at {aab_path}.")
-              sys.exit(1)
-          verify = subprocess.run(
-              ["jarsigner", "-verify", aab_path],
-              capture_output=True,
-              text=True,
-          )
-          verify_text = f"{verify.stdout}\n{verify.stderr}".lower()
-          # -strict treats a self-signed Play upload key as a failure.
-          # An unsigned jar can also exit 0, so require the "jar verified" line.
-          if verify.returncode != 0 or "jar verified" not in verify_text or "jar is unsigned" in verify_text:
-              sys.stdout.write(verify.stdout)
-              sys.stderr.write(verify.stderr)
-              print("::error::Release AAB is not signed. Check KEYSTORE_B64, CLNDR_STORE_PASSWORD, CLNDR_KEY_ALIAS, and CLNDR_KEY_PASSWORD.")
-              sys.exit(1)
-
-          apk_dir = "app/build/outputs/apk/release"
-          with open(os.path.join(apk_dir, "output-metadata.json"), encoding="utf-8") as fh:
-              apk_meta = json.load(fh)
-          apk_elements = apk_meta.get("elements") or []
-          if len(apk_elements) != 1:
-              print(f"::error::Expected exactly one release APK, found {len(apk_elements)}.")
-              sys.exit(1)
-          if apk_meta.get("applicationId") != expected:
-              print(f"::error::Release APK applicationId is {apk_meta.get('applicationId')!r}; expected {expected!r}.")
-              sys.exit(1)
-          apk_path = os.path.join(apk_dir, apk_elements[0]["outputFile"])
-          if not os.path.isfile(apk_path):
-              print(f"::error::Release APK was not found at {apk_path}.")
-              sys.exit(1)
-
-          version_name = str(element.get("versionName") or "")
-          version_code = str(element.get("versionCode") or "")
-          if not version_name or not version_code.isdigit():
-              print("::error::output-metadata.json is missing versionName or versionCode.")
-              sys.exit(1)
-          code_int = int(version_code)
-          if code_int <= 0 or code_int > 2_100_000_000:
-              print(f"::error::versionCode {code_int} is outside Play's 1..2100000000 range.")
-              sys.exit(1)
-
-          mapping = "app/build/outputs/mapping/release/mapping.txt"
-          if not os.path.isfile(mapping):
-              print("::warning::Proguard mapping.txt was not produced; Play will not receive a deobfuscation file.")
-              mapping = ""
-
-          out_dir = "build/ci-release"
-          os.makedirs(out_dir, exist_ok=True)
-          shutil.copyfile(aab_path, os.path.join(out_dir, f"clndr-{version_name}.aab"))
-          shutil.copyfile(apk_path, os.path.join(out_dir, f"clndr-{version_name}.apk"))
-          if mapping:
-              shutil.copyfile(mapping, os.path.join(out_dir, "mapping.txt"))
-
-          short_sha = os.environ["GITHUB_SHA"][:7]
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
-              fh.write(f"path={aab_path}\n")
-              fh.write(f"apk={apk_path}\n")
-              fh.write(f"mapping={mapping}\n")
-              fh.write(f"versionName={version_name}\n")
-              fh.write(f"versionCode={version_code}\n")
-              fh.write(f"applicationId={app_id}\n")
-              fh.write(f"shortSha={short_sha}\n")
-          print(f"Signed AAB {aab_path} applicationId={app_id} versionName={version_name} versionCode={version_code}")
-          PY
+          EXPECTED_TARGET_SDK: "36"
+        run: python3 .github/scripts/verify_signed_release.py
 
       - name: Detect Play Console credentials
         id: play
@@ -645,6 +558,7 @@ jobs:
           {
             echo "### Signed release"
             echo "- Package: \`${{ steps.aab.outputs.applicationId }}\`"
+            echo "- targetSdk: \`${{ steps.aab.outputs.targetSdk }}\`"
             echo "- AAB: \`${{ steps.aab.outputs.path }}\`"
             echo "- versionName: \`${{ steps.aab.outputs.versionName }}\`"
             echo "- versionCode: \`${{ steps.aab.outputs.versionCode }}\`"

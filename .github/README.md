@@ -3,6 +3,7 @@
 ```text
 .github/
 ├── dependabot.yml              Weekly Gradle + Actions updates
+├── scripts/verify_signed_release.py
 ├── workflows/ci-cd.yml         develop → master pipeline
 └── README.md
 ```
@@ -30,7 +31,7 @@ Actions are SHA-pinned. Workflow default permissions are `read-all`; write is gr
 Production is `master`. `main` is included so a branch rename still publishes. A push to that branch, after `test` passes, runs `stable-release`:
 
 1. Build a **signed** release APK and AAB (`assembleRelease`, `bundleRelease`). The job fails if the signing secrets are missing or the AAB is unsigned.
-2. Read `app/build/outputs/bundle/release/output-metadata.json` and require `applicationId` `com.knownassurajit.clndr_widget.app`. That id is the Play `packageName`. The AAB path comes from the same metadata file (under `app/build/outputs/bundle/release/`).
+2. Take the signed AAB from `app/build/outputs/bundle/release/*.aab`. AGP 8.9 does not write `output-metadata.json` in that directory (bundle listing metadata is an intermediates IDE file and has no version). Require package `com.knownassurajit.clndr_widget.app` and `targetSdk` 36 from the release APK built in the same step, and require `jarsigner -verify` to report the AAB as signed.
 3. Upload that AAB to the Play **internal** track (`status: completed`) when `PLAY_CONSOLE_JSON` is set.
 4. Publish a GitHub Release and move `release/clndr/<versionName>` to the built commit.
 
