@@ -1,0 +1,33 @@
+---
+description: "Project identity and operating intent for clndr"
+alwaysApply: true
+---
+
+# clndr
+
+Minimal monochrome widget-first Android calendar focused on macro time: 110-year life grid, year progress, milestones.
+
+Modules: :app, :feature:{lifegrid,milestones,widgets}, :core:{designsystem,domain,database,datetime}.
+Prefer feature modules over bloating :app. Keep :core:datetime pure-JVM and well tested.
+Use Compose + Glance; do not add a second UI toolkit. Load the material-design skill for M3/M3 Expressive UI.
+
+## Stack
+
+Kotlin 2.1 · Jetpack Compose · Material 3 Expressive · Glance widgets · Room 2.7 · Hilt · KSP · minSdk 26.
+
+## Verify
+
+`./gradlew assembleDebug | test | :core:datetime:test | detekt lintDebug | connectedDebugAndroidTest`
+
+## ECC workflow
+
+1. Plan non-trivial work with the planner agent / plan skill.
+2. Implement with tests first (`tdd-workflow`).
+3. Review with `code-reviewer` and `security-reviewer` before merge-level changes.
+4. Keep secrets out of prompts and commits. Prefer small, reviewable diffs.
+
+## ECC install notes
+
+- Language rules are glob-scoped; only matching files should pull them in.
+- After install, `.cursor/rules` were converted to Cursor `globs`/`alwaysApply`. `ecc doctor` may report drift; do not `ecc repair` those rule files just to clear the warning.
+- Cursor hooks live in `.cursor/hooks.json` and must resolve scripts under `.cursor/scripts/hooks/`.
