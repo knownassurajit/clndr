@@ -75,3 +75,8 @@ yarn.lock
 
 # References (top-level web prototype only — anchored so it doesn't match the com/clndr/ package path)
 /clndr/
+
+# ECC / Cursor local logs
+.cursor/*.log
+.cursor/ecc-install-state.json
+.ecc/
